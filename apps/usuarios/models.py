@@ -131,6 +131,31 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     def tiene_rol(self, *roles):
         return self.roles.filter(descripcion__in=roles).exists()
 
+    @property
+    def es_admin(self):
+        return self.tiene_rol('ADMINISTRADOR')
+
+    @property
+    def es_coordinador(self):
+        return self.tiene_rol('COORDINADOR')
+
+    @property
+    def es_instructor(self):
+        return self.tiene_rol('INSTRUCTOR')
+
+    @property
+    def es_aprendiz(self):
+        return self.tiene_rol('APRENDIZ')
+
+    @property
+    def es_admin_o_coordinador(self):
+        return self.tiene_rol('ADMINISTRADOR', 'COORDINADOR')
+
+    @property
+    def es_staff_nivel(self):
+        """INSTRUCTOR, COORDINADOR o ADMINISTRADOR"""
+        return self.tiene_rol('INSTRUCTOR', 'COORDINADOR', 'ADMINISTRADOR')
+
     def get_initials(self):
         return f"{self.nombres[0]}{self.apellidos[0]}".upper() if self.nombres and self.apellidos else "?"
 

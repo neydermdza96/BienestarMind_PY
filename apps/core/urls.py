@@ -6,7 +6,7 @@ urlpatterns = [
     # Landing pública
     path('inicio/', views.landing, name='landing'),
     # Dashboard con métricas gráficas
-    path('', views.dashboard, name='dashboard'),
+    path('dashboard/', views.dashboard, name='dashboard'),
     # Fichas
     path('fichas/',                      views.fichas,          name='fichas'),
     path('fichas/crear/',                views.crear_ficha,     name='fichas_crear'),

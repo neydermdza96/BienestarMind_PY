@@ -267,7 +267,9 @@ def registro_view(request):
     form = RegistroForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         user = form.save(commit=False)
-        user.set_password(form.cleaned_data['password1'])
+        pwd = form.cleaned_data['password1']
+        user.save()
+        user.set_password(pwd)
         user.save()
 
         # Asignar rol APRENDIZ por defecto

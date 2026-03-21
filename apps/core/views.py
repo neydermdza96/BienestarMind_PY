@@ -229,7 +229,8 @@ from django.views.decorators.cache import cache_page
 
 def landing(request):
     if request.user.is_authenticated:
-        return redirect('core:dashboard')
+        from django.urls import reverse
+        return redirect(reverse('core:dashboard'))
     return render(request, 'core/landing.html', {
         'year': __import__('datetime').date.today().year,
     })
