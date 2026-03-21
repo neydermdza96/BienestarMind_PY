@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }} — BienestarMind{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="section-header">
+  <div><h2 class="section-title">{{ titulo }}</h2></div>
+  <a href="{% url 'core:fichas' %}" class="btn-outline-sena"><i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <div class="bm-card">
+      <div class="sena-stripe"></div>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">Número de Ficha *</label>{{ form.id_ficha }}{% if form.id_ficha.errors %}<div class="text-danger" style="font-size:12px;">{{ form.id_ficha.errors|join:", " }}</div>{% endif %}</div>
+          <div class="col-md-6"><label class="form-label">Jornada</label>{{ form.jornada_ficha }}</div>
+          <div class="col-12"><label class="form-label">Descripción *</label>{{ form.descripcion }}</div>
+          <div class="col-12"><label class="form-label">Programa *</label>{{ form.programa }}</div>
+        </div>
+        <hr style="border-color:var(--gris-border);margin:20px 0;">
+        <div class="d-flex gap-3 justify-content-end">
+          <a href="{% url 'core:fichas' %}" class="btn-outline-sena">Cancelar</a>
+          <button type="submit" class="btn-sena"><i class="bi bi-check-circle"></i> Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

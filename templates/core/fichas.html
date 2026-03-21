@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Fichas — BienestarMind{% endblock %}
+{% block page_title %}Fichas{% endblock %}
+{% block content %}
+<div class="section-header">
+  <div><h2 class="section-title">Fichas de Formación</h2><p class="section-sub">Grupos de aprendices por programa y jornada</p></div>
+  <a href="{% url 'core:fichas_crear' %}" class="btn-sena"><i class="bi bi-plus-circle"></i> Nueva Ficha</a>
+</div>
+<div class="bm-card mb-3">
+  <form method="get" class="filter-bar">
+    <input type="text" name="q" value="{{ q }}" class="search-input" placeholder="🔍 Buscar por número o descripción...">
+    <select name="programa" class="filter-select">
+      <option value="">Todos los programas</option>
+      {% for p in programas %}
+      <option value="{{ p.id }}" {% if p.id|stringformat:"s" == programa %}selected{% endif %}>{{ p.nombre_programa }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-sena"><i class="bi bi-search"></i> Filtrar</button>
+    <a href="{% url 'core:fichas' %}" class="btn-outline-sena">Limpiar</a>
+  </form>
+</div>
+<div class="bm-card">
+  <div class="table-responsive">
+    <table class="bm-table">
+      <thead><tr><th>No. Ficha</th><th>Descripción</th><th>Jornada</th><th>Programa</th><th>Aprendices</th><th>Acciones</th></tr></thead>
+      <tbody>
+        {% for f in fichas %}
+        <tr>
+          <td><span style="font-family:monospace;font-weight:700;color:var(--sena-verde);font-size:14px;">{{ f.id_ficha }}</span></td>
+          <td>{{ f.descripcion }}</td>
+          <td><span style="font-size:11px;background:#e8f0fe;color:#3c4eb7;padding:2px 10px;border-radius:10px;font-weight:600;">{{ f.get_jornada_ficha_display }}</span></td>
+          <td style="font-size:12px;">{{ f.programa.nombre_programa }}</td>
+          <td style="text-align:center;"><span style="font-weight:600;">{{ f.usuarios_ficha.count }}</span></td>
+          <td>
+            <div class="acciones">
+              <a href="{% url 'core:fichas_editar' f.id_ficha %}" class="btn-outline-sena" style="font-size:11px;padding:4px 8px;"><i class="bi bi-pencil"></i></a>
+              <a href="{% url 'core:fichas_eliminar' f.id_ficha %}" class="btn-outline-sena" style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;" onclick="return confirm('¿Eliminar ficha {{ f.id_ficha }}?')"><i class="bi bi-trash"></i></a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--texto-muted);">Sin fichas.<br><a href="{% url 'core:fichas_crear' %}" class="btn-sena mt-3 d-inline-flex">+ Crear ficha</a></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

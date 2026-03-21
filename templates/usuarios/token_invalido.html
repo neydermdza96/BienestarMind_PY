@@ -1,0 +1,24 @@
+{% extends 'usuarios/auth_base.html' %}
+{% block title %}Enlace Inválido — BienestarMind{% endblock %}
+
+{% block content %}
+<div class="auth-card" style="text-align:center;">
+  <div style="width:64px;height:64px;border-radius:50%;background:#ffeaea;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+    <i class="bi bi-exclamation-triangle-fill" style="font-size:28px;color:var(--red);"></i>
+  </div>
+  <h2 class="auth-title" style="text-align:center;">Enlace no válido</h2>
+  <p style="font-size:13px;color:#64748b;margin:8px 0 20px;">{{ razon }}</p>
+  <p style="font-size:12px;color:#94a3b8;margin-bottom:20px;">
+    Los enlaces de recuperación tienen una validez de <strong>2 horas</strong> y solo pueden usarse una vez.<br>
+    Solicita un nuevo enlace si lo necesitas.
+  </p>
+  <a href="{% url 'usuarios:recuperar_password' %}" class="btn-primary-sena" style="text-decoration:none;margin-bottom:10px;">
+    <i class="bi bi-arrow-clockwise"></i> Solicitar nuevo enlace
+  </a>
+  <div style="margin-top:10px;">
+    <a href="{% url 'usuarios:login' %}" class="link-sena" style="font-size:12px;">
+      <i class="bi bi-arrow-left"></i> Volver al login
+    </a>
+  </div>
+</div>
+{% endblock %}

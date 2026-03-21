@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Categorías — BienestarMind{% endblock %}
+{% block page_title %}Categorías de Elementos{% endblock %}
+{% block content %}
+<div class="section-header">
+  <div><h2 class="section-title">Categorías de Elementos</h2></div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'elementos:lista' %}" class="btn-outline-sena"><i class="bi bi-arrow-left"></i> Elementos</a>
+    <a href="{% url 'elementos:categorias_crear' %}" class="btn-sena"><i class="bi bi-plus-circle"></i> Nueva Categoría</a>
+  </div>
+</div>
+<div class="row g-3">
+  {% for cat in categorias %}
+  <div class="col-12 col-md-4">
+    <div class="bm-card" style="border-left:3px solid var(--sena-naranja);">
+      <h5 style="margin:0 0 6px;font-size:14px;font-weight:600;">{{ cat.descripcion }}</h5>
+      <p style="margin:0;font-size:12px;color:var(--texto-muted);">{{ cat.elementos.count }} elemento{{ cat.elementos.count|pluralize }}</p>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12"><p style="text-align:center;color:var(--texto-muted);padding:32px;">Sin categorías. <a href="{% url 'elementos:categorias_crear' %}">Crea la primera</a></p></div>
+  {% endfor %}
+</div>
+{% endblock %}

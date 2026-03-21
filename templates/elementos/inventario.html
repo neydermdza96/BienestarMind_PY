@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}Inventario — BienestarMind{% endblock %}
+{% block page_title %}Inventario de Elementos{% endblock %}
+
+{% block content %}
+<div class="sena-stripe"></div>
+
+<!-- Resumen stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="stat-card"><p class="stat-num" style="color:var(--sena-verde);">{{ resumen.total_elementos }}</p><p class="stat-label">Total elementos</p></div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="stat-card"><p class="stat-num" style="color:var(--sena-verde);">{{ resumen.disponibles }}</p><p class="stat-label">Disponibles</p></div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="stat-card naranja"><p class="stat-num" style="color:var(--sena-naranja);">{{ resumen.en_uso }}</p><p class="stat-label">En uso</p></div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="stat-card naranja"><p class="stat-num" style="color:var(--sena-naranja);">{{ resumen.prestamos_activos }}</p><p class="stat-label">Préstamos activos</p></div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="stat-card" style="border-left-color:#a32d2d;"><p class="stat-num" style="color:#a32d2d;">{{ resumen.agotados }}</p><p class="stat-label">Agotados</p></div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="stat-card" style="border-left-color:#f47920;"><p class="stat-num" style="color:#f47920;">{{ resumen.alertas_stock }}</p><p class="stat-label">Alertas stock</p></div>
+  </div>
+</div>
+
+<!-- Alertas -->
+{% if alertas %}
+<div style="background:#fff3e8;border:1px solid #f4c89a;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <i class="bi bi-exclamation-triangle-fill" style="color:#d4651a;font-size:16px;"></i>
+    <strong style="font-size:13px;color:#d4651a;">{{ alertas|length }} elemento{{ alertas|length|pluralize }} con stock bajo o agotado</strong>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;">
+    {% for a in alertas %}
+    <span style="font-size:11px;background:#fff;border:1px solid #f4c89a;border-radius:20px;padding:3px 10px;color:#d4651a;">
+      {{ a.nombre_elemento }} ({{ a.stock_disponible }}/{{ a.stock_total }})
+    </span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Botones de acción -->
+<div class="section-header">
+  <div>
+    <h3 class="section-title" style="font-size:16px;">Inventario Completo</h3>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'elementos:inventario_historial' %}" class="btn-outline-sena">
+      <i class="bi bi-clock-history"></i> Historial
+    </a>
+    <a href="{% url 'elementos:crear' %}" class="btn-sena">
+      <i class="bi bi-plus-circle"></i> Nuevo Elemento
+    </a>
+  </div>
+</div>
+
+<!-- Filtros -->
+<div class="bm-card mb-3">
+  <form method="get" class="filter-bar">
+    <input type="text" name="q" value="{{ q }}" class="search-input" placeholder="🔍 Buscar por nombre o código...">
+    <select name="categoria" class="filter-select">
+      <option value="">Todas las categorías</option>
+      {% for cat in categorias %}
+      <option value="{{ cat.id }}" {% if cat.id|stringformat:"s" == categoria %}selected{% endif %}>{{ cat.descripcion }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-sena"><i class="bi bi-search"></i> Filtrar</button>
+    <a href="{% url 'elementos:inventario' %}" class="btn-outline-sena">Limpiar</a>
+  </form>
+</div>
+
+<!-- Tabla inventario -->
+<div class="bm-card">
+  <div class="table-responsive">
+    <table class="bm-table">
+      <thead>
+        <tr>
+          <th>Código</th><th>Elemento</th><th>Categoría</th><th>Ubicación</th>
+          <th>Stock Disp.</th><th>Stock Total</th><th>Estado</th><th>Stock Mín.</th><th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for el in elementos %}
+        <tr style="{% if el.alerta_stock %}background:#fffbf0;{% endif %}">
+          <td><span style="font-family:monospace;font-size:12px;color:var(--sena-verde);">{{ el.codigo|default:"—" }}</span></td>
+          <td>
+            <span style="font-weight:600;">{{ el.nombre_elemento }}</span>
+            {% if el.alerta_stock %}<i class="bi bi-exclamation-triangle-fill" style="color:#f47920;font-size:12px;" title="Stock bajo"></i>{% endif %}
+          </td>
+          <td><span style="font-size:11px;background:var(--sena-verde-light);color:var(--sena-verde-dark);padding:2px 8px;border-radius:10px;">{{ el.categoria.descripcion }}</span></td>
+          <td style="font-size:12px;color:var(--texto-muted);">{{ el.ubicacion|default:"—" }}</td>
+          <td style="text-align:center;">
+            <span style="font-size:18px;font-weight:700;color:{% if el.stock_disponible == 0 %}#a32d2d{% elif el.alerta_stock %}#f47920{% else %}var(--sena-verde){% endif %};">
+              {{ el.stock_disponible }}
+            </span>
+          </td>
+          <td style="text-align:center;font-size:13px;color:var(--texto-muted);">{{ el.stock_total }}</td>
+          <td>
+            <span class="badge-estado badge-{{ el.estado_elemento|lower }}">{{ el.get_estado_elemento_display }}</span>
+          </td>
+          <td style="text-align:center;font-size:12px;color:var(--texto-muted);">{{ el.stock_minimo }}</td>
+          <td>
+            <div class="acciones">
+              <a href="{% url 'elementos:inventario_entrada' el.pk %}" class="btn-outline-sena" style="font-size:11px;padding:3px 7px;" title="Registrar entrada">
+                <i class="bi bi-box-arrow-in-down"></i>
+              </a>
+              <a href="{% url 'elementos:inventario_salida' el.pk %}" class="btn-outline-sena" style="font-size:11px;padding:3px 7px;color:var(--sena-naranja);border-color:var(--sena-naranja);" title="Registrar salida">
+                <i class="bi bi-box-arrow-up"></i>
+              </a>
+              <a href="{% url 'elementos:inventario_devolver' el.pk %}" class="btn-outline-sena" style="font-size:11px;padding:3px 7px;" title="Registrar devolución">
+                <i class="bi bi-arrow-return-left"></i>
+              </a>
+              <a href="{% url 'elementos:editar' el.pk %}" class="btn-outline-sena" style="font-size:11px;padding:3px 7px;" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--texto-muted);">
+          <i class="bi bi-boxes" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4;"></i>
+          Sin elementos en el inventario.
+          <br><a href="{% url 'elementos:crear' %}" class="btn-sena mt-3 d-inline-flex">+ Agregar primer elemento</a>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Últimos movimientos -->
+{% if ultimos %}
+<div class="bm-card mt-4">
+  <h5 style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--sena-verde);">
+    <i class="bi bi-clock-history"></i> Últimos movimientos
+  </h5>
+  <div class="table-responsive">
+    <table class="bm-table">
+      <thead><tr><th>Fecha</th><th>Elemento</th><th>Tipo</th><th>Cant.</th><th>Antes</th><th>Después</th><th>Usuario</th><th>Descripción</th></tr></thead>
+      <tbody>
+        {% for m in ultimos %}
+        <tr>
+          <td style="white-space:nowrap;font-size:12px;">{{ m.created_at|date:"d/m/Y H:i" }}</td>
+          <td style="font-weight:500;font-size:13px;">{{ m.elemento.nombre_elemento }}</td>
+          <td>
+            <span class="badge-estado {% if m.tipo == 'ENTRADA' or m.tipo == 'DEVOLUCION' %}badge-confirmada{% elif m.tipo == 'SALIDA' %}badge-pendiente{% else %}badge-realizada{% endif %}" style="font-size:10px;">
+              {{ m.get_tipo_display }}
+            </span>
+          </td>
+          <td style="text-align:center;font-weight:700;">{{ m.cantidad }}</td>
+          <td style="text-align:center;font-size:12px;color:var(--texto-muted);">{{ m.stock_antes }}</td>
+          <td style="text-align:center;font-size:12px;font-weight:600;color:var(--sena-verde);">{{ m.stock_despues }}</td>
+          <td style="font-size:12px;">{{ m.usuario.get_initials|default:"—" }}</td>
+          <td style="font-size:12px;color:var(--texto-muted);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ m.descripcion|truncatechars:40 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div style="text-align:right;margin-top:8px;">
+    <a href="{% url 'elementos:inventario_historial' %}" class="btn-outline-sena" style="font-size:12px;padding:5px 12px;">Ver historial completo <i class="bi bi-arrow-right"></i></a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

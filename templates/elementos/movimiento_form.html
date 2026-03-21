@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }} — BienestarMind{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div><h2 class="section-title">{{ titulo }}</h2></div>
+  <a href="{% url 'elementos:inventario' %}" class="btn-outline-sena"><i class="bi bi-arrow-left"></i> Volver al inventario</a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-6">
+
+    <!-- Info del elemento -->
+    <div class="bm-card mb-3" style="border-left:4px solid var(--sena-{% if color == 'naranja' %}naranja{% elif color == 'azul' %}verde{% else %}verde{% endif %});">
+      <div class="d-flex align-items-center gap-3">
+        <div style="width:48px;height:48px;border-radius:10px;background:var(--sena-verde-light);display:flex;align-items:center;justify-content:center;font-size:22px;">
+          <i class="bi {{ icono }}" style="color:var(--sena-verde);"></i>
+        </div>
+        <div>
+          <p style="margin:0;font-weight:700;font-size:15px;">{{ elemento.nombre_elemento }}</p>
+          <p style="margin:0;font-size:12px;color:var(--texto-muted);">{{ elemento.categoria.descripcion }} {% if elemento.codigo %}· {{ elemento.codigo }}{% endif %}</p>
+        </div>
+        <div class="ms-auto text-end">
+          <p style="margin:0;font-size:22px;font-weight:800;color:var(--sena-verde);">{{ elemento.stock_disponible }}</p>
+          <p style="margin:0;font-size:11px;color:var(--texto-muted);">de {{ elemento.stock_total }} disponibles</p>
+        </div>
+      </div>
+      <!-- Barra de stock -->
+      <div style="margin-top:12px;background:#e2e8f0;border-radius:4px;height:6px;overflow:hidden;">
+        <div style="height:100%;border-radius:4px;width:{{ elemento.porcentaje_disponible }}%;background:{% if elemento.porcentaje_disponible > 50 %}var(--sena-verde){% elif elemento.porcentaje_disponible > 20 %}var(--sena-naranja){% else %}#a32d2d{% endif %};transition:width .3s;"></div>
+      </div>
+      <div style="font-size:10px;color:var(--texto-muted);margin-top:4px;">{{ elemento.porcentaje_disponible }}% disponible</div>
+    </div>
+
+    <div class="bm-card">
+      <div class="sena-stripe"></div>
+
+      {% if form.non_field_errors %}
+      <div class="alert-sena alert-danger mb-3">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <div>{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>
+      </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label">
+            {% if ajuste %}Nuevo stock disponible{% else %}Cantidad{% endif %}
+            <span style="color:var(--sena-naranja)">*</span>
+          </label>
+          {{ form.cantidad }}
+          {% if form.cantidad.errors %}<div class="text-danger" style="font-size:12px;">{{ form.cantidad.errors|join:", " }}</div>{% endif %}
+          {% if tipo == 'SALIDA' %}
+          <div style="font-size:11px;color:var(--texto-muted);margin-top:3px;">Máximo disponible: {{ elemento.stock_disponible }} unidades</div>
+          {% elif tipo == 'DEVOLUCION' %}
+          <div style="font-size:11px;color:var(--texto-muted);margin-top:3px;">Pendientes de devolución: {{ elemento.stock_total|add:"-"|add:elemento.stock_disponible|default:"0" }} unidades</div>
+          {% endif %}
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Descripción / Observaciones</label>
+          {{ form.descripcion }}
+        </div>
+        <hr style="border-color:var(--gris-border);margin:16px 0;">
+        <div class="d-flex gap-3 justify-content-end">
+          <a href="{% url 'elementos:inventario' %}" class="btn-outline-sena">Cancelar</a>
+          <button type="submit" class="btn-sena {% if color == 'naranja' %}btn-naranja{% endif %}">
+            <i class="bi {{ icono }}"></i> Confirmar {{ tipo|title }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

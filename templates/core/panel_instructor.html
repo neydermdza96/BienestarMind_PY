@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Panel Instructor — BienestarMind{% endblock %}
+{% block page_title %}Panel del Instructor{% endblock %}
+
+{% block content %}
+<div class="sena-stripe"></div>
+
+<!-- Saludo -->
+<div style="background:linear-gradient(135deg,#0f2d13,#3d9b35);border-radius:12px;padding:20px 24px;color:#fff;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+  <div>
+    <h2 style="margin:0 0 4px;font-size:18px;font-weight:700;">Hola, {{ user.nombres }} 👋</h2>
+    <p style="margin:0;font-size:13px;opacity:.8;">Panel de Instructor · Bienestar al Aprendiz SENA</p>
+  </div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;">
+    <div style="text-align:center;">
+      <p style="margin:0;font-size:24px;font-weight:700;color:#9fe1cb;">{{ total_asesorias }}</p>
+      <p style="margin:0;font-size:11px;opacity:.7;">Mis asesorías</p>
+    </div>
+    <div style="text-align:center;">
+      <p style="margin:0;font-size:24px;font-weight:700;color:#fca86c;">{{ total_aprendices }}</p>
+      <p style="margin:0;font-size:11px;opacity:.7;">Aprendices</p>
+    </div>
+    <div style="text-align:center;">
+      <p style="margin:0;font-size:24px;font-weight:700;color:{% if reservas_pendientes > 0 %}#fca86c{% else %}#9fe1cb{% endif %};">{{ reservas_pendientes }}</p>
+      <p style="margin:0;font-size:11px;opacity:.7;">Reservas pend.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Acciones rápidas -->
+<div class="bm-card mb-4">
+  <h5 style="font-size:13px;font-weight:600;color:var(--sena-verde);margin-bottom:12px;"><i class="bi bi-lightning-fill"></i> Acciones rápidas</h5>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'asesorias:crear' %}" class="btn-sena"><i class="bi bi-plus-circle"></i> Nueva Asesoría</a>
+    <a href="{% url 'reservas:espacios_crear' %}" class="btn-sena btn-naranja"><i class="bi bi-building-add"></i> Reservar Espacio</a>
+    <a href="{% url 'asesorias:lista' %}" class="btn-outline-sena"><i class="bi bi-chat-heart"></i> Ver todas las asesorías</a>
+    <a href="{% url 'reportes:asesorias_pdf' %}" class="btn-outline-sena"><i class="bi bi-file-pdf"></i> Reporte PDF</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Próximas asesorías -->
+  <div class="col-12 col-lg-6">
+    <div class="bm-card h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 style="font-size:14px;font-weight:600;margin:0;color:var(--sena-verde);">
+          <i class="bi bi-calendar-check-fill"></i> Próximas asesorías
+        </h5>
+        <a href="{% url 'asesorias:lista' %}" class="btn-outline-sena" style="font-size:11px;padding:4px 10px;">Ver todas</a>
+      </div>
+      {% for a in proximas_asesorias %}
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+        <div style="width:36px;height:36px;border-radius:8px;background:var(--sena-verde-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;color:var(--sena-verde-dark);">
+          {{ a.fecha|date:"d" }}<br style="line-height:0;"><span style="font-size:9px;">{{ a.fecha|date:"M" }}</span>
+        </div>
+        <div style="flex:1;">
+          <p style="margin:0;font-size:13px;font-weight:600;">{{ a.usuario_recibe.nombre_completo }}</p>
+          <p style="margin:0;font-size:11px;color:var(--texto-muted);">{{ a.motivo_asesoria|truncatechars:50 }}</p>
+        </div>
+        <span class="badge-estado badge-{{ a.estado|lower }}" style="font-size:10px;">{{ a.get_estado_display }}</span>
+      </div>
+      {% empty %}
+      <p style="color:var(--texto-muted);font-size:13px;text-align:center;padding:20px 0;">Sin próximas asesorías pendientes.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Historial reciente -->
+  <div class="col-12 col-lg-6">
+    <div class="bm-card h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 style="font-size:14px;font-weight:600;margin:0;color:var(--sena-naranja);">
+          <i class="bi bi-clock-history"></i> Historial reciente
+        </h5>
+      </div>
+      {% for a in mis_asesorias %}
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f1f5f9;">
+        <div class="avatar avatar-sm">{{ a.usuario_recibe.get_initials }}</div>
+        <div style="flex:1;">
+          <p style="margin:0;font-size:12px;font-weight:600;">{{ a.usuario_recibe.nombre_completo }}</p>
+          <p style="margin:0;font-size:11px;color:var(--texto-muted);">{{ a.fecha|date:"d/m/Y" }} · {{ a.motivo_asesoria|truncatechars:35 }}</p>
+        </div>
+        <span class="badge-estado badge-{{ a.estado|lower }}" style="font-size:10px;">{{ a.get_estado_display }}</span>
+      </div>
+      {% empty %}
+      <p style="color:var(--texto-muted);font-size:13px;text-align:center;padding:20px 0;">Sin asesorías registradas aún.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

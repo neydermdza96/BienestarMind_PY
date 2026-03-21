@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Panel Coordinador — BienestarMind{% endblock %}
+{% block page_title %}Panel del Coordinador{% endblock %}
+
+{% block content %}
+<div class="sena-stripe"></div>
+
+<!-- Header -->
+<div style="background:linear-gradient(135deg,#0f2d13,#2d7427);border-radius:12px;padding:20px 24px;color:#fff;margin-bottom:20px;">
+  <h2 style="margin:0 0 4px;font-size:18px;font-weight:700;">Panel de Coordinación · Bienestar al Aprendiz</h2>
+  <p style="margin:0;font-size:13px;opacity:.8;">Visión completa del sistema — SENA CSF</p>
+</div>
+
+<!-- Stats completas -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="stat-card"><p class="stat-num" style="color:var(--sena-verde);">{{ total_usuarios }}</p><p class="stat-label">Usuarios activos</p></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card"><p class="stat-num" style="color:var(--sena-verde);">{{ total_aprendices }}</p><p class="stat-label">Aprendices</p></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card naranja"><p class="stat-num" style="color:var(--sena-naranja);">{{ total_instructores }}</p><p class="stat-label">Instructores</p></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card naranja"><p class="stat-num" style="color:var(--sena-naranja);">{{ asesorias_mes }}</p><p class="stat-label">Asesorías este mes</p></div></div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="stat-card"><p class="stat-num" style="color:var(--sena-verde);">{{ asesorias_hoy }}</p><p class="stat-label">Asesorías hoy</p></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="border-left-color:#f47920;"><p class="stat-num" style="color:#f47920;">{{ asesorias_pendientes }}</p><p class="stat-label">Asesorías pend.</p></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card naranja"><p class="stat-num" style="color:var(--sena-naranja);">{{ reservas_espacio_hoy }}</p><p class="stat-label">Reservas hoy</p></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="border-left-color:#a32d2d;"><p class="stat-num" style="color:#a32d2d;">{{ alertas_stock|length }}</p><p class="stat-label">Alertas stock</p></div></div>
+</div>
+
+<!-- Alertas de stock -->
+{% if alertas_stock %}
+<div style="background:#fff3e8;border:1px solid #f4c89a;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <i class="bi bi-exclamation-triangle-fill" style="color:#d4651a;font-size:16px;"></i>
+    <strong style="font-size:13px;color:#d4651a;">Elementos con stock bajo — requieren atención</strong>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;">
+    {% for a in alertas_stock %}
+    <a href="{% url 'elementos:inventario' %}" style="font-size:11px;background:#fff;border:1px solid #f4c89a;border-radius:20px;padding:3px 10px;color:#d4651a;text-decoration:none;">
+      {{ a.nombre_elemento }} ({{ a.stock_disponible }}/{{ a.stock_total }})
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+  <!-- Últimas asesorías -->
+  <div class="col-12 col-lg-7">
+    <div class="bm-card h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 style="font-size:14px;font-weight:600;margin:0;color:var(--sena-verde);">
+          <i class="bi bi-chat-heart-fill"></i> Últimas Asesorías
+        </h5>
+        <a href="{% url 'asesorias:lista' %}" class="btn-outline-sena" style="font-size:11px;padding:4px 10px;">Ver todas</a>
+      </div>
+      {% for a in ultimas_asesorias %}
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f1f5f9;">
+        <div class="avatar avatar-sm">{{ a.usuario_asesor.get_initials }}</div>
+        <div style="flex:1;">
+          <p style="margin:0;font-size:12px;font-weight:600;">{{ a.usuario_asesor.nombre_completo }} → {{ a.usuario_recibe.nombre_completo }}</p>
+          <p style="margin:0;font-size:11px;color:var(--texto-muted);">{{ a.fecha|date:"d/m/Y" }} · {{ a.motivo_asesoria|truncatechars:40 }}</p>
+        </div>
+        <span class="badge-estado badge-{{ a.estado|lower }}" style="font-size:10px;">{{ a.get_estado_display }}</span>
+      </div>
+      {% empty %}
+      <p style="color:var(--texto-muted);font-size:13px;padding:20px 0;text-align:center;">Sin asesorías registradas.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Instructores -->
+  <div class="col-12 col-lg-5">
+    <div class="bm-card h-100">
+      <h5 style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--sena-naranja);">
+        <i class="bi bi-people-fill"></i> Instructores Activos
+      </h5>
+      {% for inst in instructores %}
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+        <div class="avatar avatar-sm" style="background:var(--sena-naranja-light);color:var(--sena-naranja-dark);">{{ inst.get_initials }}</div>
+        <div style="flex:1;">
+          <p style="margin:0;font-size:12px;font-weight:600;">{{ inst.nombre_completo }}</p>
+          <p style="margin:0;font-size:10px;color:var(--texto-muted);">{{ inst.correo }}</p>
+        </div>
+        <span style="font-size:11px;background:var(--sena-verde-light);color:var(--sena-verde-dark);padding:2px 8px;border-radius:10px;">
+          {{ inst.asesorias_dadas.count }} asesorías
+        </span>
+      </div>
+      {% empty %}
+      <p style="color:var(--texto-muted);font-size:13px;padding:20px 0;text-align:center;">Sin instructores registrados.</p>
+      {% endfor %}
+
+      <div style="margin-top:12px;">
+        <a href="{% url 'usuarios:lista' %}?rol=2" class="btn-outline-sena" style="width:100%;justify-content:center;">
+          <i class="bi bi-people"></i> Ver todos los instructores
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Acciones de coordinación -->
+<div class="bm-card mt-4">
+  <h5 style="font-size:13px;font-weight:600;color:var(--sena-verde);margin-bottom:12px;"><i class="bi bi-lightning-fill"></i> Acciones de Coordinación</h5>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'usuarios:crear' %}" class="btn-sena"><i class="bi bi-person-plus"></i> Crear Usuario</a>
+    <a href="{% url 'asesorias:crear' %}" class="btn-sena"><i class="bi bi-plus-circle"></i> Nueva Asesoría</a>
+    <a href="{% url 'elementos:inventario' %}" class="btn-sena btn-naranja"><i class="bi bi-boxes"></i> Ver Inventario</a>
+    <a href="{% url 'reportes:index' %}" class="btn-outline-sena"><i class="bi bi-file-earmark-bar-graph"></i> Reportes</a>
+    <a href="{% url 'reservas:espacios' %}" class="btn-outline-sena"><i class="bi bi-building"></i> Reservas espacios</a>
+  </div>
+</div>
+{% endblock %}

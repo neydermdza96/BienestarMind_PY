@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }} — BienestarMind{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <h2 class="section-title">{{ titulo }}</h2>
+  </div>
+  <a href="javascript:history.back()" class="btn-outline-sena">
+    <i class="bi bi-arrow-left"></i> Volver
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+    <div class="bm-card">
+      <div class="sena-stripe"></div>
+
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert-sena alert-danger mb-3">
+          <i class="bi bi-exclamation-circle-fill"></i>
+          {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <div class="row g-3">
+          {% for field in form %}
+          <div class="col-12 {% if field.field.widget.input_type != 'textarea' and field.name != 'motivo_asesoria' and field.name != 'observaciones' and field.name != 'descripcion' and field.name != 'descripcion_reserva' %}col-md-6{% endif %}">
+            <label class="form-label" for="{{ field.id_for_label }}">
+              {{ field.label }}
+              {% if field.field.required %}<span style="color:var(--sena-naranja)">*</span>{% endif %}
+            </label>
+
+            {% if field.name == 'roles' %}
+              <div class="d-flex flex-wrap gap-3 mt-1">
+                {% for choice in field %}
+                <div class="form-check">
+                  {{ choice.tag }}
+                  <label class="form-check-label" for="{{ choice.id_for_label }}" style="font-size:13px;">
+                    {{ choice.choice_label }}
+                  </label>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              {{ field }}
+            {% endif %}
+
+            {% if field.errors %}
+            <div style="color:#a32d2d;font-size:12px;margin-top:4px;">
+              <i class="bi bi-exclamation-circle"></i> {{ field.errors|join:", " }}
+            </div>
+            {% endif %}
+
+            {% if field.help_text %}
+            <div style="color:var(--texto-muted);font-size:11px;margin-top:3px;">{{ field.help_text }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Alerta edad mínima -->
+        <div class="alert-sena alert-warning mt-3" id="edad-warning" style="display:none;">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span>El sistema no permite registrar usuarios menores de 16 años.</span>
+        </div>
+
+        <hr style="border-color:var(--gris-border);margin:20px 0;">
+
+        <div class="d-flex gap-3 justify-content-end">
+          <a href="javascript:history.back()" class="btn-outline-sena">Cancelar</a>
+          <button type="submit" class="btn-sena">
+            <i class="bi bi-check-circle"></i> {{ accion|default:"Guardar" }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Validación visual de edad mínima en el cliente
+  const fechaInput = document.querySelector('input[name="fecha_de_nacimiento"]');
+  const warning    = document.getElementById('edad-warning');
+  if (fechaInput) {
+    fechaInput.addEventListener('change', function() {
+      const nacimiento = new Date(this.value);
+      const hoy = new Date();
+      const edad = Math.floor((hoy - nacimiento) / (365.25 * 24 * 3600 * 1000));
+      if (edad < 16) {
+        warning.style.display = 'flex';
+        this.style.borderColor = '#a32d2d';
+      } else {
+        warning.style.display = 'none';
+        this.style.borderColor = '';
+      }
+    });
+  }
+
+  // Mostrar nombre del archivo seleccionado
+  const fileInput = document.querySelector('input[type="file"]');
+  if (fileInput) {
+    fileInput.addEventListener('change', function() {
+      const label = this.nextElementSibling;
+      if (label && this.files.length > 0) {
+        label.textContent = this.files[0].name;
+      }
+    });
+  }
+</script>
+{% endblock %}

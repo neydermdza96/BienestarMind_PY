@@ -1,0 +1,26 @@
+{% extends 'usuarios/auth_base.html' %}
+{% block title %}Correo Enviado — BienestarMind{% endblock %}
+
+{% block content %}
+<div class="auth-card" style="text-align:center;">
+  <div style="width:64px;height:64px;border-radius:50%;background:var(--verde-lt);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+    <i class="bi bi-envelope-check-fill" style="font-size:28px;color:var(--verde);"></i>
+  </div>
+  <h2 class="auth-title" style="text-align:center;">¡Revisa tu correo!</h2>
+  <p style="font-size:13px;color:#64748b;margin:8px 0 20px;">
+    Si tu correo está registrado en el sistema, recibirás un enlace para restablecer tu contraseña en los próximos minutos.
+  </p>
+  <div style="background:#f8faf8;border-radius:8px;padding:12px 14px;font-size:12px;color:#475569;margin-bottom:20px;text-align:left;">
+    <p style="margin:0 0 6px;font-weight:600;color:var(--verde-dark);">¿No llegó el correo?</p>
+    <ul style="margin:0;padding-left:16px;line-height:1.8;">
+      <li>Revisa la carpeta de <strong>spam o correo no deseado</strong>.</li>
+      <li>Espera unos minutos e intenta de nuevo.</li>
+      <li>Verifica que el correo ingresado sea correcto.</li>
+      <li>El enlace es válido por <strong>2 horas</strong>.</li>
+    </ul>
+  </div>
+  <a href="{% url 'usuarios:login' %}" class="btn-primary-sena" style="text-decoration:none;">
+    <i class="bi bi-arrow-left"></i> Volver al inicio de sesión
+  </a>
+</div>
+{% endblock %}

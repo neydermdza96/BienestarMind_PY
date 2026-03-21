@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Gestión PQRS — BienestarMind{% endblock %}
+{% block page_title %}Gestión de PQRS{% endblock %}
+{% block content %}
+<div class="sena-stripe"></div>
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="stat-card"><p class="stat-num" style="color:var(--sena-verde);">{{ resumen.total }}</p><p class="stat-label">Total recibidas</p></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card naranja"><p class="stat-num" style="color:var(--sena-naranja);">{{ resumen.pendientes }}</p><p class="stat-label">Pendientes</p></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card"><p class="stat-num" style="color:var(--sena-verde);">{{ resumen.en_revision }}</p><p class="stat-label">En revisión</p></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card"><p class="stat-num" style="color:var(--sena-verde);">{{ resumen.respondidas }}</p><p class="stat-label">Respondidas</p></div></div>
+</div>
+<!-- Por tipo -->
+<div class="bm-card mb-3">
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+    <span style="font-size:12px;font-weight:600;color:var(--texto-muted);">Por tipo:</span>
+    {% for tipo, label in tipos %}
+    <span style="font-size:12px;padding:3px 10px;border-radius:20px;background:#f1f5f9;color:#475569;">
+      {{ label }}: <strong>{{ por_tipo|get_item:tipo|default:"0" }}</strong>
+    </span>
+    {% endfor %}
+  </div>
+</div>
+<!-- Filtros -->
+<div class="bm-card mb-3">
+  <form method="get" class="filter-bar">
+    <input type="text" name="q" value="{{ q }}" class="search-input" placeholder="🔍 Buscar por radicado, asunto...">
+    <select name="tipo" class="filter-select">
+      <option value="">Todos los tipos</option>
+      {% for val,label in tipos %}<option value="{{ val }}" {% if val == tipo %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <select name="estado" class="filter-select">
+      <option value="">Todos los estados</option>
+      {% for val,label in estados %}<option value="{{ val }}" {% if val == estado %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn-sena"><i class="bi bi-search"></i> Filtrar</button>
+    <a href="{% url 'pqrs:admin' %}" class="btn-outline-sena">Limpiar</a>
+    <span class="ms-auto" style="font-size:12px;color:var(--texto-muted);">{{ total }} resultado{{ total|pluralize }}</span>
+  </form>
+</div>
+<!-- Tabla -->
+<div class="bm-card">
+  <div class="table-responsive">
+    <table class="bm-table">
+      <thead><tr><th>Radicado</th><th>Tipo</th><th>Asunto</th><th>Remitente</th><th>Fecha</th><th>Estado</th><th>Prioridad</th><th>Acciones</th></tr></thead>
+      <tbody>
+        {% for p in pqrs_list %}
+        <tr style="{% if p.estado == 'PENDIENTE' %}background:#fffbf0;{% endif %}">
+          <td><span style="font-family:monospace;font-size:12px;color:var(--sena-verde);font-weight:700;">{{ p.radicado }}</span></td>
+          <td><span class="badge-estado {% if p.tipo == 'FELICITACION' %}badge-confirmada{% elif p.tipo == 'QUEJA' or p.tipo == 'RECLAMO' %}badge-cancelada{% elif p.tipo == 'SUGERENCIA' %}badge-realizada{% else %}badge-pendiente{% endif %}" style="font-size:10px;">{{ p.get_tipo_display }}</span></td>
+          <td style="font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ p.asunto }}</td>
+          <td style="font-size:12px;">{{ p.nombre_remitente }}</td>
+          <td style="font-size:12px;white-space:nowrap;">{{ p.created_at|date:"d/m/Y" }}</td>
+          <td><span class="badge-estado badge-{{ p.estado|lower }}" style="font-size:10px;">{{ p.get_estado_display }}</span></td>
+          <td><span style="font-size:11px;font-weight:700;color:{% if p.prioridad == 'URGENTE' %}#a32d2d{% elif p.prioridad == 'ALTA' %}#f47920{% else %}#64748b{% endif %};">{{ p.get_prioridad_display }}</span></td>
+          <td>
+            <div class="acciones">
+              <a href="{% url 'pqrs:detalle' p.pk %}" class="btn-outline-sena" style="font-size:11px;padding:3px 7px;" title="Ver detalle"><i class="bi bi-eye"></i></a>
+              <a href="{% url 'pqrs:responder' p.pk %}" class="btn-sena" style="font-size:11px;padding:3px 7px;" title="Responder"><i class="bi bi-reply-fill"></i></a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--texto-muted);">Sin PQRS registradas.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

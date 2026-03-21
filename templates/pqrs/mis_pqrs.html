@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Mis PQRS — BienestarMind{% endblock %}
+{% block page_title %}Mis Solicitudes PQRS{% endblock %}
+{% block content %}
+<div class="section-header">
+  <div><h2 class="section-title">Mis Solicitudes PQRS</h2><p class="section-sub">Historial de tus peticiones, quejas, reclamos, sugerencias y felicitaciones</p></div>
+  <a href="{% url 'pqrs:crear' %}" class="btn-sena"><i class="bi bi-plus-circle"></i> Nueva PQRS</a>
+</div>
+<div class="bm-card">
+  <div class="table-responsive">
+    <table class="bm-table">
+      <thead><tr><th>Radicado</th><th>Tipo</th><th>Asunto</th><th>Fecha</th><th>Estado</th><th>Prioridad</th></tr></thead>
+      <tbody>
+        {% for p in pqrs_list %}
+        <tr>
+          <td><span style="font-family:monospace;font-size:12px;color:var(--sena-verde);font-weight:700;">{{ p.radicado }}</span></td>
+          <td><span class="badge-estado {% if p.tipo == 'FELICITACION' %}badge-confirmada{% elif p.tipo == 'QUEJA' or p.tipo == 'RECLAMO' %}badge-cancelada{% elif p.tipo == 'SUGERENCIA' %}badge-realizada{% else %}badge-pendiente{% endif %}">{{ p.get_tipo_display }}</span></td>
+          <td style="font-weight:500;">{{ p.asunto|truncatechars:60 }}</td>
+          <td style="font-size:12px;white-space:nowrap;">{{ p.created_at|date:"d/m/Y H:i" }}</td>
+          <td><span class="badge-estado badge-{{ p.estado|lower }}">{{ p.get_estado_display }}</span></td>
+          <td><span style="font-size:11px;font-weight:600;color:{% if p.prioridad == 'URGENTE' %}#a32d2d{% elif p.prioridad == 'ALTA' %}#f47920{% else %}#64748b{% endif %};">{{ p.get_prioridad_display }}</span></td>
+        </tr>
+        {% if p.respuesta %}
+        <tr style="background:#f8faf8;">
+          <td colspan="6" style="padding:8px 14px;font-size:12px;">
+            <strong style="color:var(--sena-verde);"><i class="bi bi-reply-fill"></i> Respuesta:</strong>
+            {{ p.respuesta }}
+            <span style="color:#94a3b8;margin-left:8px;">— {{ p.respondida_por.nombre_completo }} · {{ p.fecha_respuesta|date:"d/m/Y" }}</span>
+          </td>
+        </tr>
+        {% endif %}
+        {% empty %}
+        <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--texto-muted);">
+          <i class="bi bi-inbox" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4;"></i>
+          No has enviado ninguna PQRS aún.
+          <br><a href="{% url 'pqrs:crear' %}" class="btn-sena mt-3 d-inline-flex">+ Enviar primera PQRS</a>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

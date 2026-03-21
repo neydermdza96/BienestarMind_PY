@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }} — BienestarMind{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="section-header">
+  <div><h2 class="section-title">{{ titulo }}</h2></div>
+  <a href="{% url 'reservas:elementos' %}" class="btn-outline-sena"><i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <div class="bm-card">
+      <div class="sena-stripe"></div>
+      {% if form.non_field_errors %}
+      <div class="alert-sena alert-danger mb-3"><i class="bi bi-exclamation-circle-fill"></i><div>{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div></div>
+      {% endif %}
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Fecha <span style="color:var(--sena-naranja)">*</span></label>
+            {{ form.fecha_reserva }}
+            {% if form.fecha_reserva.errors %}<div class="text-danger" style="font-size:12px;">{{ form.fecha_reserva.errors|join:", " }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Elemento disponible <span style="color:var(--sena-naranja)">*</span></label>
+            {{ form.elemento }}
+            {% if form.elemento.errors %}<div class="text-danger" style="font-size:12px;">{{ form.elemento.errors|join:", " }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label">Ficha (opcional)</label>
+            {{ form.ficha }}
+          </div>
+          <div class="col-12">
+            <label class="form-label">Descripción / Motivo <span style="color:var(--sena-naranja)">*</span></label>
+            {{ form.descripcion_reserva }}
+            {% if form.descripcion_reserva.errors %}<div class="text-danger" style="font-size:12px;">{{ form.descripcion_reserva.errors|join:", " }}</div>{% endif %}
+          </div>
+        </div>
+        <div class="alert-sena alert-success mt-4">
+          <i class="bi bi-bell-fill"></i>
+          <span style="font-size:12px;">Al solicitar recibirás confirmación por <strong>Email</strong>, <strong>SMS</strong> y <strong>WhatsApp</strong>.</span>
+        </div>
+        <hr style="border-color:var(--gris-border);margin:20px 0;">
+        <div class="d-flex gap-3 justify-content-end">
+          <a href="{% url 'reservas:elementos' %}" class="btn-outline-sena">Cancelar</a>
+          <button type="submit" class="btn-sena"><i class="bi bi-check-circle"></i> Solicitar Elemento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var fechaInput = document.querySelector('input[name="fecha_reserva"]');
+  var btnGuardar = document.querySelector('button[type="submit"]');
+  if (!fechaInput) return;
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var aviso = document.createElement('div');
+  aviso.style.cssText = 'display:none;margin-top:6px;padding:8px 12px;background:#ffeaea;border:1px solid #f4a9a9;border-radius:7px;font-size:12px;color:#a32d2d;';
+  fechaInput.parentNode.insertBefore(aviso, fechaInput.nextSibling);
+  function validar() {
+    if (!fechaInput.value) return;
+    var sel = new Date(fechaInput.value + 'T00:00:00');
+    if (sel < hoy) {
+      var hoyStr = hoy.toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'});
+      aviso.innerHTML = '&#10060; Fecha pasada no permitida. M&iacute;nimo: <strong>hoy (' + hoyStr + ')</strong>.';
+      aviso.style.display = 'block';
+      fechaInput.style.borderColor = '#a32d2d';
+      if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.style.opacity = '0.5'; }
+    } else {
+      aviso.style.display = 'none';
+      fechaInput.style.borderColor = '#3d9b35';
+      if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.style.opacity = '1'; }
+    }
+  }
+  fechaInput.addEventListener('change', validar);
+  fechaInput.addEventListener('input', validar);
+  if (fechaInput.value) validar();
+})();
+</script>
+{% endblock %}

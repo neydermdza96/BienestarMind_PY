@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Detalle PQRS {{ pqrs.radicado }} — BienestarMind{% endblock %}
+{% block page_title %}Detalle PQRS{% endblock %}
+{% block content %}
+<div class="section-header">
+  <div><h2 class="section-title">{{ pqrs.radicado }}</h2><p class="section-sub">{{ pqrs.get_tipo_display }} · {{ pqrs.created_at|date:"d/m/Y H:i" }}</p></div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'pqrs:responder' pqrs.pk %}" class="btn-sena"><i class="bi bi-reply-fill"></i> Responder</a>
+    <a href="{% url 'pqrs:admin' %}" class="btn-outline-sena"><i class="bi bi-arrow-left"></i> Volver</a>
+  </div>
+</div>
+<div class="row g-4">
+  <div class="col-12 col-lg-8">
+    <div class="bm-card">
+      <div class="sena-stripe"></div>
+      <h5 style="font-size:16px;font-weight:700;margin-bottom:12px;">{{ pqrs.asunto }}</h5>
+      <p style="font-size:13px;color:#334155;line-height:1.7;white-space:pre-wrap;">{{ pqrs.descripcion }}</p>
+    </div>
+    {% if pqrs.respuesta %}
+    <div class="bm-card mt-3" style="border-left:4px solid var(--sena-verde);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <div class="avatar avatar-sm">{{ pqrs.respondida_por.get_initials }}</div>
+        <div><p style="margin:0;font-size:13px;font-weight:600;">Respuesta de {{ pqrs.respondida_por.nombre_completo }}</p><p style="margin:0;font-size:11px;color:var(--texto-muted);">{{ pqrs.fecha_respuesta|date:"d/m/Y H:i" }}</p></div>
+      </div>
+      <p style="font-size:13px;color:#334155;line-height:1.7;white-space:pre-wrap;">{{ pqrs.respuesta }}</p>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="bm-card">
+      <h5 style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--sena-verde);">Información</h5>
+      {% for label, valor in info_items %}
+      <div style="padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:12px;display:flex;justify-content:space-between;">
+        <span style="color:var(--texto-muted);">{{ label }}</span>
+        <span style="font-weight:600;">{{ valor }}</span>
+      </div>
+      {% endfor %}
+      <div style="padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:12px;"><span style="color:var(--texto-muted);">Radicado</span><br><span style="font-family:monospace;font-weight:700;color:var(--sena-verde);">{{ pqrs.radicado }}</span></div>
+      <div style="padding:7px 0;font-size:12px;"><span style="color:var(--texto-muted);">Remitente</span><br><span style="font-weight:600;">{{ pqrs.nombre_remitente }}</span><br>{% if pqrs.correo_contacto %}<span style="color:var(--sena-verde);">{{ pqrs.correo_contacto }}</span>{% endif %}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

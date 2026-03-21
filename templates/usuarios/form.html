@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }} — BienestarMind{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <h2 class="section-title">{{ titulo }}</h2>
+    <p class="section-sub">
+      <i class="bi bi-shield-lock-fill" style="color:var(--sena-naranja);"></i>
+      Solo se permite el registro de personas mayores de 16 años
+    </p>
+  </div>
+  <a href="{% url 'usuarios:lista' %}" class="btn-outline-sena">
+    <i class="bi bi-arrow-left"></i> Volver
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-9">
+    <div class="bm-card">
+      <div class="sena-stripe"></div>
+
+      {% if form.non_field_errors %}
+      <div class="alert-sena alert-danger mb-3">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <div>{% for e in form.non_field_errors %}{{ e }}<br>{% endfor %}</div>
+      </div>
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <h6 style="color:var(--sena-verde);font-weight:600;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--sena-verde-light);">
+          <i class="bi bi-person"></i> Datos Personales
+        </h6>
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label">Nombres <span style="color:var(--sena-naranja)">*</span></label>
+            {{ form.nombres }}
+            {% if form.nombres.errors %}<div class="text-danger" style="font-size:12px;">{{ form.nombres.errors|join:", " }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Apellidos <span style="color:var(--sena-naranja)">*</span></label>
+            {{ form.apellidos }}
+            {% if form.apellidos.errors %}<div class="text-danger" style="font-size:12px;">{{ form.apellidos.errors|join:", " }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Documento <span style="color:var(--sena-naranja)">*</span></label>
+            {{ form.documento }}
+            {% if form.documento.errors %}<div class="text-danger" style="font-size:12px;">{{ form.documento.errors|join:", " }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Género</label>
+            {{ form.genero }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Teléfono</label>
+            {{ form.telefono }}
+            <div style="font-size:11px;color:var(--texto-muted);margin-top:3px;">Usado para SMS y WhatsApp</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Correo Electrónico <span style="color:var(--sena-naranja)">*</span></label>
+            {{ form.correo }}
+            {% if form.correo.errors %}<div class="text-danger" style="font-size:12px;">{{ form.correo.errors|join:", " }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">
+              Fecha de Nacimiento <span style="color:var(--sena-naranja)">*</span>
+            </label>
+            {{ form.fecha_de_nacimiento }}
+            {% if form.fecha_de_nacimiento.errors %}
+            <div class="text-danger" style="font-size:12px;margin-top:4px;">
+              <i class="bi bi-exclamation-circle"></i>
+              {{ form.fecha_de_nacimiento.errors|join:", " }}
+            </div>
+            {% endif %}
+            <!-- Indicador visual de edad -->
+            <div id="edad-display" style="margin-top:6px;font-size:12px;display:none;"></div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Foto de Perfil (opcional)</label>
+            {{ form.foto }}
+            {% if usuario and usuario.foto %}
+            <div style="margin-top:8px;">
+              <img src="{{ usuario.foto.url }}" alt="Foto actual"
+                   style="width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid var(--sena-verde);">
+              <span style="font-size:11px;color:var(--texto-muted);margin-left:8px;">Foto actual</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <h6 style="color:var(--sena-verde);font-weight:600;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--sena-verde-light);">
+          <i class="bi bi-shield-lock"></i> Acceso y Seguridad
+        </h6>
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label">
+              Contraseña {% if not usuario %}<span style="color:var(--sena-naranja)">*</span>{% endif %}
+            </label>
+            {{ form.password }}
+            <div style="font-size:11px;color:var(--texto-muted);margin-top:3px;">
+              {{ form.password.help_text }}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Roles <span style="color:var(--sena-naranja)">*</span></label>
+            <div class="d-flex flex-wrap gap-3 mt-1">
+              {% for choice in form.roles %}
+              <div class="form-check">
+                {{ choice.tag }}
+                <label class="form-check-label" for="{{ choice.id_for_label }}" style="font-size:13px;cursor:pointer;">
+                  {{ choice.choice_label }}
+                </label>
+              </div>
+              {% endfor %}
+            </div>
+            {% if form.roles.errors %}<div class="text-danger" style="font-size:12px;">{{ form.roles.errors|join:", " }}</div>{% endif %}
+          </div>
+        </div>
+
+        <!-- Alerta edad mínima -->
+        <div class="alert-sena alert-warning" id="edad-warning" style="display:none;margin-bottom:16px;">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <div>
+            <strong>Edad no permitida</strong><br>
+            <span style="font-size:12px;">El sistema <strong>no permite</strong> registrar usuarios menores de 16 años.<br>
+            La persona debe tener al menos 16 años cumplidos para poder ser registrada.</span>
+          </div>
+        </div>
+
+        <hr style="border-color:var(--gris-border);margin:20px 0;">
+        <div class="d-flex gap-3 justify-content-end">
+          <a href="{% url 'usuarios:lista' %}" class="btn-outline-sena">Cancelar</a>
+          <button type="submit" class="btn-sena" id="btn-guardar">
+            <i class="bi bi-check-circle"></i> {{ accion|default:"Guardar Usuario" }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const fechaInput   = document.querySelector('input[name="fecha_de_nacimiento"]');
+const warning      = document.getElementById('edad-warning');
+const edadDisplay  = document.getElementById('edad-display');
+const btnGuardar   = document.getElementById('btn-guardar');
+const EDAD_MINIMA  = 16;
+
+function calcularEdad(fechaNac) {
+  const hoy = new Date();
+  const nac = new Date(fechaNac);
+  return Math.floor((hoy - nac) / (365.25 * 24 * 3600 * 1000));
+}
+
+if (fechaInput) {
+  fechaInput.addEventListener('change', function () {
+    if (!this.value) return;
+    const edad = calcularEdad(this.value);
+    edadDisplay.style.display = 'block';
+
+    if (edad < EDAD_MINIMA) {
+      edadDisplay.innerHTML = `<span style="color:#a32d2d;font-weight:600;">
+        <i class="bi bi-x-circle-fill"></i> Edad calculada: ${edad} año${edad !== 1 ? 's' : ''} — No cumple el mínimo de ${EDAD_MINIMA} años
+      </span>`;
+      warning.style.display = 'flex';
+      this.style.borderColor = '#a32d2d';
+      btnGuardar.disabled = true;
+      btnGuardar.style.opacity = '0.5';
+    } else {
+      edadDisplay.innerHTML = `<span style="color:var(--sena-verde);font-weight:600;">
+        <i class="bi bi-check-circle-fill"></i> Edad: ${edad} año${edad !== 1 ? 's' : ''} ✓
+      </span>`;
+      warning.style.display = 'none';
+      this.style.borderColor = 'var(--sena-verde)';
+      btnGuardar.disabled = false;
+      btnGuardar.style.opacity = '1';
+    }
+  });
+
+  // Trigger en carga si ya tiene valor
+  if (fechaInput.value) fechaInput.dispatchEvent(new Event('change'));
+}
+</script>
+{% endblock %}

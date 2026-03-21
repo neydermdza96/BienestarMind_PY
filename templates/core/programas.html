@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Programas — BienestarMind{% endblock %}
+{% block page_title %}Programas de Formación{% endblock %}
+{% block content %}
+<div class="section-header">
+  <div><h2 class="section-title">Programas de Formación</h2><p class="section-sub">Catálogo de programas SENA</p></div>
+  <a href="{% url 'core:programas_crear' %}" class="btn-sena"><i class="bi bi-plus-circle"></i> Nuevo Programa</a>
+</div>
+<div class="row g-3">
+  {% for p in programas %}
+  <div class="col-12 col-md-6 col-xl-4">
+    <div class="bm-card h-100" style="border-left:4px solid var(--sena-verde);">
+      <div class="d-flex justify-content-between align-items-start">
+        <div style="flex:1;">
+          <h5 style="margin:0 0 6px;font-size:14px;font-weight:700;">{{ p.nombre_programa }}</h5>
+          <p style="margin:0 0 10px;font-size:12px;color:var(--texto-muted);">{{ p.descripcion }}</p>
+          <span style="font-size:11px;background:var(--sena-verde-light);color:var(--sena-verde-dark);padding:2px 10px;border-radius:10px;font-weight:600;">
+            {{ p.fichas.count }} ficha{{ p.fichas.count|pluralize }}
+          </span>
+        </div>
+        <a href="{% url 'core:programas_editar' p.pk %}" class="btn-outline-sena ms-3" style="font-size:11px;padding:4px 8px;flex-shrink:0;"><i class="bi bi-pencil"></i></a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12"><div class="bm-card" style="text-align:center;padding:40px;color:var(--texto-muted);">Sin programas. <a href="{% url 'core:programas_crear' %}">Crea el primero</a></div></div>
+  {% endfor %}
+</div>
+{% endblock %}

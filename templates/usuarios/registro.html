@@ -1,0 +1,153 @@
+{% extends 'usuarios/auth_base.html' %}
+{% block title %}Registro — BienestarMind{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <div class="stripe"></div>
+  <h2 class="auth-title">Crear cuenta nueva</h2>
+  <p class="auth-sub">Ingresa tus datos para registrarte como Aprendiz SENA</p>
+
+  {% if form.non_field_errors %}
+  <div class="alert-err">
+    <i class="bi bi-exclamation-circle-fill" style="flex-shrink:0;margin-top:1px;"></i>
+    <div>{% for e in form.non_field_errors %}{{ e }}<br>{% endfor %}</div>
+  </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="row2" style="margin-bottom:10px;">
+      <div>
+        <label class="form-label">Nombres <span style="color:var(--naranja)">*</span></label>
+        {{ form.nombres }}
+        {% if form.nombres.errors %}<div class="invalid-feedback d-block">{{ form.nombres.errors|join:", " }}</div>{% endif %}
+      </div>
+      <div>
+        <label class="form-label">Apellidos <span style="color:var(--naranja)">*</span></label>
+        {{ form.apellidos }}
+        {% if form.apellidos.errors %}<div class="invalid-feedback d-block">{{ form.apellidos.errors|join:", " }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div class="row2" style="margin-bottom:10px;">
+      <div>
+        <label class="form-label">Documento <span style="color:var(--naranja)">*</span></label>
+        {{ form.documento }}
+        {% if form.documento.errors %}<div class="invalid-feedback d-block">{{ form.documento.errors|join:", " }}</div>{% endif %}
+      </div>
+      <div>
+        <label class="form-label">Género</label>
+        {{ form.genero }}
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <label class="form-label">Correo electrónico <span style="color:var(--naranja)">*</span></label>
+      {{ form.correo }}
+      {% if form.correo.errors %}<div class="invalid-feedback d-block">{{ form.correo.errors|join:", " }}</div>{% endif %}
+      <div style="font-size:10px;color:#64748b;margin-top:3px;">Este correo se usará para recuperar tu contraseña.</div>
+    </div>
+
+    <div class="row2" style="margin-bottom:10px;">
+      <div>
+        <label class="form-label">Teléfono</label>
+        {{ form.telefono }}
+      </div>
+      <div>
+        <label class="form-label">
+          Fecha de Nacimiento <span style="color:var(--naranja)">*</span>
+        </label>
+        {{ form.fecha_de_nacimiento }}
+        {% if form.fecha_de_nacimiento.errors %}
+        <div class="invalid-feedback d-block">{{ form.fecha_de_nacimiento.errors|join:", " }}</div>
+        {% endif %}
+        <div id="edad-display" style="font-size:10px;margin-top:3px;display:none;"></div>
+      </div>
+    </div>
+
+    <div class="row2" style="margin-bottom:14px;">
+      <div>
+        <label class="form-label">Contraseña <span style="color:var(--naranja)">*</span></label>
+        {{ form.password1 }}
+        {% if form.password1.errors %}<div class="invalid-feedback d-block">{{ form.password1.errors|join:", " }}</div>{% endif %}
+      </div>
+      <div>
+        <label class="form-label">Confirmar contraseña <span style="color:var(--naranja)">*</span></label>
+        {{ form.password2 }}
+        {% if form.password2.errors %}<div class="invalid-feedback d-block">{{ form.password2.errors|join:", " }}</div>{% endif %}
+        <div id="pass-match" style="font-size:10px;margin-top:3px;display:none;"></div>
+      </div>
+    </div>
+
+    <!-- Alerta edad -->
+    <div id="edad-warning" style="display:none;background:var(--naranja-lt);border:1px solid #f4c89a;border-radius:8px;padding:9px 12px;font-size:11px;color:var(--naranja-dk);margin-bottom:12px;">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      Debes tener al menos <strong>16 años</strong> para registrarte en BienestarMind SENA.
+    </div>
+
+    <button type="submit" class="btn-primary-sena" id="btn-registro">
+      <i class="bi bi-person-plus-fill"></i> Crear mi cuenta
+    </button>
+  </form>
+
+  <div class="divider"><span>¿Ya tienes cuenta?</span></div>
+  <div style="text-align:center;">
+    <a href="{% url 'usuarios:login' %}" class="link-sena" style="font-size:13px;">
+      <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  var fechaI   = document.querySelector('input[name="fecha_de_nacimiento"]');
+  var display  = document.getElementById('edad-display');
+  var warning  = document.getElementById('edad-warning');
+  var btnReg   = document.getElementById('btn-registro');
+  var pass1    = document.querySelector('input[name="password1"]');
+  var pass2    = document.querySelector('input[name="password2"]');
+  var matchDiv = document.getElementById('pass-match');
+
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+
+  if(fechaI){
+    fechaI.setAttribute('max', hoy.toISOString().split('T')[0]);
+    fechaI.addEventListener('change', function(){
+      if(!this.value) return;
+      var sel = new Date(this.value + 'T00:00:00');
+      var edad = Math.floor((hoy - sel) / (365.25*24*3600*1000));
+      display.style.display = 'block';
+      if(edad < 16){
+        display.innerHTML = '<span style="color:var(--red)"><i class="bi bi-x-circle-fill"></i> Edad: '+edad+' año'+(edad!==1?'s':'')+' — No permitido</span>';
+        warning.style.display = 'block';
+        this.style.borderColor = 'var(--red)';
+        if(btnReg){ btnReg.disabled = true; btnReg.style.opacity='.5'; }
+      } else {
+        display.innerHTML = '<span style="color:var(--verde)"><i class="bi bi-check-circle-fill"></i> Edad: '+edad+' año'+(edad!==1?'s':'')+' ✓</span>';
+        warning.style.display = 'none';
+        this.style.borderColor = 'var(--verde)';
+        if(btnReg){ btnReg.disabled = false; btnReg.style.opacity='1'; }
+      }
+    });
+    if(fechaI.value) fechaI.dispatchEvent(new Event('change'));
+  }
+
+  function checkPass(){
+    if(!pass1 || !pass2 || !pass2.value) return;
+    matchDiv.style.display = 'block';
+    if(pass1.value === pass2.value && pass1.value.length >= 8){
+      matchDiv.innerHTML = '<span style="color:var(--verde)"><i class="bi bi-check-circle-fill"></i> Las contraseñas coinciden</span>';
+      pass2.style.borderColor = 'var(--verde)';
+    } else if(pass1.value !== pass2.value){
+      matchDiv.innerHTML = '<span style="color:var(--red)"><i class="bi bi-x-circle-fill"></i> Las contraseñas no coinciden</span>';
+      pass2.style.borderColor = 'var(--red)';
+    }
+  }
+  if(pass1) pass1.addEventListener('input', checkPass);
+  if(pass2) pass2.addEventListener('input', checkPass);
+})();
+</script>
+{% endblock %}

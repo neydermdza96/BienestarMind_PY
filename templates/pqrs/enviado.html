@@ -1,0 +1,25 @@
+{% extends 'usuarios/auth_base.html' %}
+{% block title %}PQRS Enviada — BienestarMind{% endblock %}
+{% block content %}
+<div class="auth-card" style="text-align:center;">
+  <div style="width:64px;height:64px;border-radius:50%;background:var(--verde-lt);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;">✅</div>
+  <h2 class="auth-title" style="text-align:center;">¡PQRS enviada exitosamente!</h2>
+  <p style="font-size:13px;color:#64748b;margin:8px 0 16px;">Tu solicitud fue registrada. Recibirás una confirmación en tu correo y te responderemos en máximo <strong>48 horas hábiles</strong>.</p>
+  <div style="background:#f8faf8;border-radius:8px;padding:12px 14px;font-size:12px;color:#475569;margin-bottom:20px;text-align:left;">
+    <p style="margin:0 0 4px;font-weight:600;color:var(--verde-dark);">¿Qué sigue?</p>
+    <ul style="margin:0;padding-left:16px;line-height:1.8;">
+      <li>Recibirás un correo con el número de radicado.</li>
+      <li>El equipo de BienestarMind revisará tu solicitud.</li>
+      <li>Te responderán al correo registrado en máximo 48 horas hábiles.</li>
+    </ul>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+    <a href="{% url 'pqrs:crear' %}" class="btn-primary-sena" style="text-decoration:none;flex:1;min-width:140px;justify-content:center;">
+      <i class="bi bi-plus-circle"></i> Nueva PQRS
+    </a>
+    <a href="{% url 'core:landing' %}" style="flex:1;min-width:140px;padding:11px;border-radius:10px;border:1.5px solid #e2e8f0;color:#475569;text-decoration:none;text-align:center;font-size:14px;font-weight:600;">
+      <i class="bi bi-house"></i> Inicio
+    </a>
+  </div>
+</div>
+{% endblock %}

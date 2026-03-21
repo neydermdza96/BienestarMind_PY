@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}Usuarios — BienestarMind{% endblock %}
+{% block page_title %}Usuarios{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <h2 class="section-title">Usuarios</h2>
+    <p class="section-sub">Gestión de usuarios del sistema — Solo mayores de 16 años</p>
+  </div>
+  {% if user.roles.filter %}
+  <a href="{% url 'usuarios:crear' %}" class="btn-sena">
+    <i class="bi bi-person-plus"></i> Nuevo Usuario
+  </a>
+  {% endif %}
+</div>
+
+<!-- Filtros -->
+<div class="bm-card mb-3">
+  <form method="get" class="filter-bar">
+    <input type="text" name="q" value="{{ q }}" class="search-input"
+           placeholder="🔍 Buscar por nombre, documento, correo, teléfono...">
+    <select name="rol" class="filter-select">
+      <option value="">Todos los roles</option>
+      {% for rol in roles %}
+      <option value="{{ rol.id }}" {% if rol.id|stringformat:"s" == rol_id %}selected{% endif %}>
+        {{ rol.descripcion }}
+      </option>
+      {% endfor %}
+    </select>
+    <select name="genero" class="filter-select">
+      <option value="">Todos los géneros</option>
+      <option value="MASCULINO"  {% if genero == 'MASCULINO' %}selected{% endif %}>Masculino</option>
+      <option value="FEMENINO"   {% if genero == 'FEMENINO' %}selected{% endif %}>Femenino</option>
+      <option value="OTRO"       {% if genero == 'OTRO' %}selected{% endif %}>Otro</option>
+    </select>
+    <button type="submit" class="btn-sena"><i class="bi bi-search"></i> Filtrar</button>
+    <a href="{% url 'usuarios:lista' %}" class="btn-outline-sena">Limpiar</a>
+    <div class="ms-auto d-flex gap-2 align-items-center">
+      <span style="font-size:12px;color:var(--texto-muted);">{{ total }} usuario{{ total|pluralize }}</span>
+      <a href="?{{ request.GET.urlencode }}&formato=pdf" class="btn-outline-sena" style="font-size:12px;padding:5px 12px;">
+        <i class="bi bi-file-pdf"></i> PDF
+      </a>
+      <a href="?{{ request.GET.urlencode }}&formato=excel" class="btn-outline-sena" style="font-size:12px;padding:5px 12px;">
+        <i class="bi bi-file-excel"></i> Excel
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Tabla -->
+<div class="bm-card">
+  <div class="table-responsive">
+    <table class="bm-table">
+      <thead>
+        <tr>
+          <th style="width:40px;"></th>
+          <th>Nombre Completo</th>
+          <th>Documento</th>
+          <th>Correo</th>
+          <th>Teléfono</th>
+          <th>Edad</th>
+          <th>Género</th>
+          <th>Roles</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in usuarios %}
+        <tr>
+          <td>
+            {% if u.foto %}
+            <img src="{{ u.foto.url }}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+            {% else %}
+            <div class="avatar avatar-sm">{{ u.get_initials }}</div>
+            {% endif %}
+          </td>
+          <td>
+            <span style="font-weight:600;">{{ u.nombres }} {{ u.apellidos }}</span>
+          </td>
+          <td style="font-family:monospace;font-size:12px;">{{ u.documento }}</td>
+          <td style="font-size:12px;">{{ u.correo }}</td>
+          <td style="font-size:12px;">{{ u.telefono|default:"—" }}</td>
+          <td style="text-align:center;">
+            <span style="font-size:13px;font-weight:600;{% if u.edad < 18 %}color:var(--sena-naranja);{% endif %}">
+              {{ u.edad }}
+            </span>
+          </td>
+          <td style="font-size:12px;">{{ u.get_genero_display }}</td>
+          <td>
+            {% for rol in u.roles.all %}
+            <span class="badge-estado badge-{{ rol.descripcion|lower }}" style="margin:1px 2px;display:inline-block;">
+              {{ rol.descripcion }}
+            </span>
+            {% empty %}—{% endfor %}
+          </td>
+          <td>
+            {% if u.is_active %}
+            <span class="badge-estado badge-confirmada">Activo</span>
+            {% else %}
+            <span class="badge-estado badge-cancelada">Inactivo</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="acciones">
+              <a href="{% url 'usuarios:editar' u.pk %}" class="btn-outline-sena" style="font-size:11px;padding:4px 8px;" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+              {% if request.user.pk != u.pk %}
+              <a href="{% url 'usuarios:toggle' u.pk %}"
+                 class="btn-outline-sena"
+                 style="font-size:11px;padding:4px 8px;{% if u.is_active %}color:#a32d2d;border-color:#a32d2d;{% else %}color:var(--sena-verde);border-color:var(--sena-verde);{% endif %}"
+                 onclick="return confirm('¿{% if u.is_active %}Desactivar{% else %}Activar{% endif %} al usuario {{ u.nombre_completo }}?')"
+                 title="{% if u.is_active %}Desactivar{% else %}Activar{% endif %}">
+                <i class="bi bi-{% if u.is_active %}person-dash{% else %}person-check{% endif %}"></i>
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="10" style="text-align:center;padding:40px;color:var(--texto-muted);">
+            <i class="bi bi-people" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4;"></i>
+            Sin usuarios con estos filtros.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

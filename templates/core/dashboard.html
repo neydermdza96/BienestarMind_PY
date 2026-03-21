@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — BienestarMind{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="sena-stripe"></div>
+
+<!-- Saludo -->
+<div class="mb-4">
+  <h2 class="fw-700 mb-1" style="font-size:20px;">Bienvenido, {{ user.nombres }} 👋</h2>
+  <p style="color:var(--texto-muted);font-size:13px;margin:0;">Sistema de Gestión Integral de Bienestar al Aprendiz · SENA</p>
+</div>
+
+<!-- Stats Grid -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-xl-2"><div class="stat-card"><div class="d-flex justify-content-between align-items-start"><div><p class="stat-num" style="color:var(--sena-verde)">{{ stats.usuarios }}</p><p class="stat-label">Usuarios</p></div><i class="bi bi-people stat-icon" style="color:var(--sena-verde)"></i></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2"><div class="stat-card naranja"><div class="d-flex justify-content-between align-items-start"><div><p class="stat-num" style="color:var(--sena-naranja)">{{ stats.asesorias }}</p><p class="stat-label">Asesorías</p></div><i class="bi bi-chat-heart stat-icon" style="color:var(--sena-naranja)"></i></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2"><div class="stat-card"><div class="d-flex justify-content-between align-items-start"><div><p class="stat-num" style="color:var(--sena-verde)">{{ stats.reservas_espacios }}</p><p class="stat-label">Res. Espacios</p></div><i class="bi bi-building stat-icon" style="color:var(--sena-verde)"></i></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2"><div class="stat-card naranja"><div class="d-flex justify-content-between align-items-start"><div><p class="stat-num" style="color:var(--sena-naranja)">{{ stats.reservas_elementos }}</p><p class="stat-label">Res. Elementos</p></div><i class="bi bi-box stat-icon" style="color:var(--sena-naranja)"></i></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2"><div class="stat-card"><div class="d-flex justify-content-between align-items-start"><div><p class="stat-num" style="color:var(--sena-verde)">{{ stats.fichas }}</p><p class="stat-label">Fichas</p></div><i class="bi bi-card-list stat-icon" style="color:var(--sena-verde)"></i></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2"><div class="stat-card naranja"><div class="d-flex justify-content-between align-items-start"><div><p class="stat-num" style="color:var(--sena-naranja)">{{ stats.elementos }}</p><p class="stat-label">Elementos</p></div><i class="bi bi-laptop stat-icon" style="color:var(--sena-naranja)"></i></div></div></div>
+</div>
+
+<!-- Acciones rápidas -->
+<div class="bm-card mb-4">
+  <h5 class="fw-600 mb-3" style="font-size:13px;color:var(--sena-verde)"><i class="bi bi-lightning-fill"></i> Acciones Rápidas</h5>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'asesorias:crear' %}" class="btn-sena"><i class="bi bi-plus-circle"></i> Nueva Asesoría</a>
+    <a href="{% url 'reservas:espacios_crear' %}" class="btn-sena btn-naranja"><i class="bi bi-building-add"></i> Reservar Espacio</a>
+    <a href="{% url 'core:calendario' %}" class="btn-outline-sena"><i class="bi bi-calendar3"></i> Ver Calendario</a>
+    <a href="{% url 'reportes:index' %}" class="btn-outline-sena"><i class="bi bi-file-earmark-pdf"></i> Reportes</a>
+    <a href="{% url 'pqrs:crear' %}" class="btn-outline-sena"><i class="bi bi-headset"></i> PQRS</a>
+  </div>
+</div>
+
+<!-- GRÁFICAS -->
+<div class="row g-4 mb-4">
+  <!-- Asesorías por mes -->
+  <div class="col-12 col-lg-8">
+    <div class="bm-card h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 style="font-size:14px;font-weight:700;margin:0;color:var(--sena-verde)"><i class="bi bi-graph-up-arrow"></i> Asesorías por mes (últimos 6 meses)</h5>
+      </div>
+      <div style="position:relative;height:220px;">
+        <canvas id="chartAsesorias"></canvas>
+      </div>
+    </div>
+  </div>
+  <!-- Por estado (dona) -->
+  <div class="col-12 col-lg-4">
+    <div class="bm-card h-100">
+      <h5 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--sena-naranja)"><i class="bi bi-pie-chart-fill"></i> Estado de Asesorías</h5>
+      <div style="position:relative;height:200px;">
+        <canvas id="chartEstados"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <!-- Reservas por mes -->
+  <div class="col-12 col-lg-6">
+    <div class="bm-card h-100">
+      <h5 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--sena-verde)"><i class="bi bi-bar-chart-fill"></i> Reservas de Espacios por mes</h5>
+      <div style="position:relative;height:200px;">
+        <canvas id="chartReservas"></canvas>
+      </div>
+    </div>
+  </div>
+  <!-- Top instructores -->
+  <div class="col-12 col-lg-6">
+    <div class="bm-card h-100">
+      <h5 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--sena-naranja)"><i class="bi bi-trophy-fill"></i> Top Instructores por Asesorías</h5>
+      <div style="position:relative;height:200px;">
+        <canvas id="chartInstructores"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Últimas asesorías + Sedes -->
+<div class="row g-3">
+  <div class="col-12 col-lg-6">
+    <div class="bm-card h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-600 mb-0" style="font-size:13px"><i class="bi bi-chat-heart-fill" style="color:var(--sena-verde)"></i> Últimas Asesorías</h5>
+        <a href="{% url 'asesorias:lista' %}" class="btn-outline-sena" style="font-size:11px;padding:4px 10px">Ver todas</a>
+      </div>
+      {% for a in ultimas_asesorias %}
+      <div class="d-flex align-items-center gap-3 py-2" style="border-bottom:1px solid var(--gris-border)">
+        <div class="avatar avatar-sm">{{ a.usuario_recibe.get_initials }}</div>
+        <div class="flex-grow-1 overflow-hidden">
+          <p class="mb-0 fw-500" style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.usuario_recibe.nombre_completo }}</p>
+          <p class="mb-0" style="font-size:10px;color:var(--texto-muted)">{{ a.fecha|date:"d/m/Y" }} · {{ a.motivo_asesoria|truncatechars:35 }}</p>
+        </div>
+        <span class="badge-estado badge-{{ a.estado|lower }}" style="font-size:10px">{{ a.get_estado_display }}</span>
+      </div>
+      {% empty %}
+      <p style="color:var(--texto-muted);font-size:13px;text-align:center;padding:20px 0">Sin asesorías registradas aún.</p>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <div class="bm-card h-100">
+      <h5 class="fw-600 mb-3" style="font-size:13px"><i class="bi bi-geo-alt-fill" style="color:var(--sena-naranja)"></i> Sedes SENA</h5>
+      {% for sede in sedes %}
+      <div class="mb-3 pb-3" style="border-bottom:1px solid var(--gris-border)">
+        <p class="fw-600 mb-1" style="font-size:13px">{{ sede.nombre_sede }}</p>
+        <p class="mb-0" style="font-size:12px;color:var(--texto-muted)"><i class="bi bi-geo-alt"></i> {{ sede.direccion_sede }}&nbsp;&nbsp;<i class="bi bi-telephone"></i> {{ sede.telefono_sede }}</p>
+        <div class="mt-2 d-flex flex-wrap gap-1">
+          {% for esp in sede.espacios.all %}
+          <span style="font-size:10px;background:var(--sena-verde-light);color:var(--sena-verde-dark);padding:2px 7px;border-radius:10px">{{ esp.nombre_del_espacio }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#64748b';
+
+fetch('{% url "core:metricas_api" %}')
+  .then(r => r.json())
+  .then(data => {
+    // ── Gráfico 1: Asesorías por mes (barras) ──────────────────
+    new Chart(document.getElementById('chartAsesorias'), {
+      type: 'bar',
+      data: {
+        labels: data.asesorias_por_mes.labels,
+        datasets: [{
+          label: 'Asesorías',
+          data: data.asesorias_por_mes.data,
+          backgroundColor: 'rgba(61,155,53,.75)',
+          borderColor: '#3d9b35',
+          borderWidth: 1.5,
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1 } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    // ── Gráfico 2: Estado asesorías (dona) ─────────────────────
+    var colores = {
+      'PENDIENTE': '#f47920', 'CONFIRMADA': '#3d9b35',
+      'REALIZADA': '#64748b', 'CANCELADA': '#a32d2d'
+    };
+    new Chart(document.getElementById('chartEstados'), {
+      type: 'doughnut',
+      data: {
+        labels: data.asesorias_por_estado.labels,
+        datasets: [{
+          data: data.asesorias_por_estado.data,
+          backgroundColor: data.asesorias_por_estado.labels.map(l => colores[l] || '#94a3b8'),
+          borderWidth: 2, borderColor: '#fff',
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12, padding: 8, font: { size: 11 } } }
+        }
+      }
+    });
+
+    // ── Gráfico 3: Reservas por mes (línea) ────────────────────
+    new Chart(document.getElementById('chartReservas'), {
+      type: 'line',
+      data: {
+        labels: data.reservas_por_mes.labels,
+        datasets: [{
+          label: 'Reservas',
+          data: data.reservas_por_mes.data,
+          borderColor: '#f47920',
+          backgroundColor: 'rgba(244,121,32,.12)',
+          tension: 0.4, fill: true, pointRadius: 4,
+          pointBackgroundColor: '#f47920',
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1 } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    // ── Gráfico 4: Top instructores (barras horizontales) ──────
+    new Chart(document.getElementById('chartInstructores'), {
+      type: 'bar',
+      data: {
+        labels: data.top_instructores.labels,
+        datasets: [{
+          label: 'Asesorías realizadas',
+          data: data.top_instructores.data,
+          backgroundColor: [
+            'rgba(61,155,53,.8)', 'rgba(244,121,32,.8)',
+            'rgba(24,95,165,.8)', 'rgba(83,74,183,.8)', 'rgba(163,45,45,.8)'
+          ],
+          borderRadius: 5,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1 } },
+          y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  })
+  .catch(err => console.log('Error cargando métricas:', err));
+</script>
+{% endblock %}

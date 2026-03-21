@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Elementos — BienestarMind{% endblock %}
+{% block page_title %}Inventario de Elementos{% endblock %}
+{% block content %}
+<div class="section-header">
+  <div>
+    <h2 class="section-title">Inventario de Elementos</h2>
+    <p class="section-sub">Control de equipos y materiales disponibles</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'elementos:categorias' %}" class="btn-outline-sena"><i class="bi bi-tags"></i> Categorías</a>
+    <a href="{% url 'elementos:crear' %}" class="btn-sena"><i class="bi bi-plus-circle"></i> Nuevo Elemento</a>
+  </div>
+</div>
+
+<div class="bm-card mb-3">
+  <form method="get" class="filter-bar">
+    <input type="text" name="q" value="{{ q }}" class="search-input" placeholder="🔍 Buscar por nombre, código...">
+    <select name="estado" class="filter-select">
+      <option value="">Todos los estados</option>
+      {% for val, label in estados %}
+      <option value="{{ val }}" {% if val == estado %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="categoria" class="filter-select">
+      <option value="">Todas las categorías</option>
+      {% for cat in categorias %}
+      <option value="{{ cat.id }}" {% if cat.id|stringformat:"s" == categoria %}selected{% endif %}>{{ cat.descripcion }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-sena"><i class="bi bi-search"></i> Filtrar</button>
+    <a href="{% url 'elementos:lista' %}" class="btn-outline-sena">Limpiar</a>
+    <span class="ms-auto" style="font-size:12px;color:var(--texto-muted);">{{ total }} elemento{{ total|pluralize }}</span>
+  </form>
+</div>
+
+<!-- Resumen estados -->
+<div class="row g-3 mb-3">
+  {% for val, label in estados %}
+  <div class="col-auto">
+    <div style="background:#fff;border:1px solid var(--gris-border);border-radius:8px;padding:8px 16px;display:flex;align-items:center;gap:8px;">
+      <span class="badge-estado badge-{{ val|lower }}">{{ label }}</span>
+      <span style="font-weight:600;font-size:13px;">{{ elementos|length }}</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="bm-card">
+  <div class="table-responsive">
+    <table class="bm-table">
+      <thead>
+        <tr><th>Código</th><th>Nombre</th><th>Categoría</th><th>Estado</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+        {% for el in elementos %}
+        <tr>
+          <td><span style="font-family:monospace;font-size:12px;color:var(--sena-verde);">{{ el.codigo|default:"—" }}</span></td>
+          <td><span style="font-weight:500;">{{ el.nombre_elemento }}</span>{% if el.descripcion %}<br><small style="color:var(--texto-muted);">{{ el.descripcion|truncatechars:60 }}</small>{% endif %}</td>
+          <td><span style="font-size:12px;background:var(--sena-verde-light);color:var(--sena-verde-dark);padding:2px 10px;border-radius:10px;">{{ el.categoria.descripcion }}</span></td>
+          <td><span class="badge-estado badge-{{ el.estado_elemento|lower }}">{{ el.get_estado_elemento_display }}</span></td>
+          <td>
+            <div class="acciones">
+              <a href="{% url 'elementos:editar' el.pk %}" class="btn-outline-sena" style="font-size:11px;padding:4px 8px;" title="Editar"><i class="bi bi-pencil"></i></a>
+              <a href="{% url 'elementos:eliminar' el.pk %}" class="btn-outline-sena" style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;" onclick="return confirm('¿Eliminar este elemento?')" title="Eliminar"><i class="bi bi-trash"></i></a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" style="text-align:center;padding:40px;color:var(--texto-muted);">
+            <i class="bi bi-box" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4;"></i>
+            Sin elementos registrados.
+            <br><a href="{% url 'elementos:crear' %}" class="btn-sena mt-3 d-inline-flex">+ Agregar elemento</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

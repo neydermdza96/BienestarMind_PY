@@ -1,0 +1,6 @@
+IMPORTANTE: Después de copiar el proyecto, ejecutar:
+
+python manage.py makemigrations usuarios
+python manage.py migrate
+
+Esto creará la tabla 'token_recuperacion' en la base de datos.

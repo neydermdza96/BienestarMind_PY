@@ -1,0 +1,23 @@
+# Entorno virtual
+venv/
+
+# Variables de entorno (contraseñas)
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Django
+staticfiles/
+media/
+db.sqlite3
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+Desktop.ini

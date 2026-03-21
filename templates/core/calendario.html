@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block title %}Calendario — BienestarMind{% endblock %}
+{% block page_title %}Calendario de Reservas y Asesorías{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.css" rel="stylesheet">
+<style>
+  .fc { font-family: 'Segoe UI', sans-serif; font-size: 13px; }
+  .fc-toolbar-title { font-size: 16px !important; font-weight: 700; color: var(--texto-dark); }
+  .fc-button-primary { background: var(--sena-verde) !important; border-color: var(--sena-verde) !important; font-size: 12px !important; }
+  .fc-button-primary:hover { background: var(--sena-verde-dark) !important; }
+  .fc-button-active { background: var(--sena-naranja) !important; border-color: var(--sena-naranja) !important; }
+  .fc-event { border-radius: 4px !important; font-size: 11px !important; border: none !important; padding: 2px 4px !important; cursor: pointer; }
+  .fc-daygrid-event-dot { display: none; }
+  .fc-col-header-cell { background: #f8faf8; font-weight: 600; font-size: 12px; }
+  .fc-today-button { background: var(--sena-naranja) !important; border-color: var(--sena-naranja) !important; }
+  /* Leyenda */
+  .leyenda { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+  .leyenda-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #475569; }
+  .leyenda-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  /* Modal evento */
+  #evento-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1050; align-items: center; justify-content: center; }
+  #evento-modal.show { display: flex; }
+  #evento-modal-box { background: #fff; border-radius: 14px; padding: 24px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+  .ev-tipo { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
+  .ev-titulo { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
+  .ev-row { display: flex; gap: 8px; font-size: 12px; color: #475569; margin-bottom: 6px; }
+  .ev-icon { flex-shrink: 0; margin-top: 1px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sena-stripe"></div>
+
+<!-- Filtros y leyenda -->
+<div class="bm-card mb-3">
+  <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;">
+    <div class="leyenda">
+      <div class="leyenda-item"><div class="leyenda-dot" style="background:#3d9b35;"></div> Asesoría confirmada</div>
+      <div class="leyenda-item"><div class="leyenda-dot" style="background:#f47920;"></div> Asesoría pendiente</div>
+      <div class="leyenda-item"><div class="leyenda-dot" style="background:#185FA5;"></div> Reserva espacio</div>
+      <div class="leyenda-item"><div class="leyenda-dot" style="background:#0F6E56;"></div> Disponible</div>
+      <div class="leyenda-item"><div class="leyenda-dot" style="background:#993C1D;"></div> Bloqueado</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <select id="filtro-espacio" class="filter-select" style="width:200px;">
+        <option value="">Todos los espacios</option>
+        {% for esp in espacios %}
+        <option value="{{ esp.pk }}">{{ esp.nombre_del_espacio }}</option>
+        {% endfor %}
+      </select>
+      <a href="{% url 'core:horarios_crear' %}" class="btn-sena" style="font-size:12px;padding:6px 12px;">
+        <i class="bi bi-plus-circle"></i> Agregar horario
+      </a>
+      <a href="{% url 'asesorias:crear' %}" class="btn-sena btn-naranja" style="font-size:12px;padding:6px 12px;">
+        <i class="bi bi-plus-circle"></i> Nueva asesoría
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Calendario -->
+<div class="bm-card">
+  <div id="calendario-container" style="min-height:600px;"></div>
+</div>
+
+<!-- Modal detalle evento -->
+<div id="evento-modal">
+  <div id="evento-modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+      <div class="ev-tipo" id="ev-tipo"></div>
+      <button onclick="cerrarModal()" style="border:none;background:none;font-size:20px;color:#94a3b8;cursor:pointer;line-height:1;">×</button>
+    </div>
+    <div class="ev-titulo" id="ev-titulo"></div>
+    <div id="ev-detalles"></div>
+    <div style="margin-top:16px;display:flex;gap:8px;" id="ev-acciones"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/locales/es.global.min.js"></script>
+<script>
+var calendario;
+var filtroEspacio = '';
+
+document.getElementById('filtro-espacio').addEventListener('change', function() {
+  filtroEspacio = this.value;
+  if(calendario) calendario.refetchEvents();
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  var el = document.getElementById('calendario-container');
+  calendario = new FullCalendar.Calendar(el, {
+    locale: 'es',
+    initialView: 'dayGridMonth',
+    headerToolbar: {
+      left:   'prev,next today',
+      center: 'title',
+      right:  'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+    },
+    buttonText: { today:'Hoy', month:'Mes', week:'Semana', day:'Día', list:'Lista' },
+    height: 'auto',
+    nowIndicator: true,
+    editable: false,
+    selectable: true,
+    weekends: true,
+    events: function(info, successCallback, failureCallback) {
+      var url = '{% url "core:calendario_api" %}?start=' + info.startStr + '&end=' + info.endStr;
+      if(filtroEspacio) url += '&espacio=' + filtroEspacio;
+      fetch(url)
+        .then(r => r.json())
+        .then(data => successCallback(data))
+        .catch(() => failureCallback());
+    },
+    eventClick: function(info) {
+      mostrarModal(info.event);
+    },
+    select: function(info) {
+      // Click en día vacío → ir a crear reserva
+      window.location.href = '{% url "reservas:espacios_crear" %}';
+    },
+    eventMouseEnter: function(info) {
+      info.el.style.opacity = '.85';
+      info.el.style.transform = 'scale(1.02)';
+    },
+    eventMouseLeave: function(info) {
+      info.el.style.opacity = '1';
+      info.el.style.transform = 'scale(1)';
+    },
+  });
+  calendario.render();
+});
+
+var TIPO_LABELS = {
+  'asesoria':       { label:'Asesoría', color:'var(--sena-verde)' },
+  'reserva_espacio':{ label:'Reserva de Espacio', color:'#185FA5' },
+  'horario':        { label:'Horario Instructor', color:'#0F6E56' },
+};
+
+function mostrarModal(event) {
+  var props = event.extendedProps;
+  var tipo  = props.tipo || 'sistema';
+  var meta  = TIPO_LABELS[tipo] || { label:'Evento', color:'#64748b' };
+
+  document.getElementById('ev-tipo').textContent = meta.label;
+  document.getElementById('ev-tipo').style.color = meta.color;
+  document.getElementById('ev-titulo').textContent = event.title;
+
+  var det = '';
+  var fecha = event.start ? event.start.toLocaleDateString('es-CO', {weekday:'long',day:'2-digit',month:'long',year:'numeric'}) : '';
+  var hora  = event.start ? event.start.toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit'}) : '';
+
+  det += `<div class="ev-row"><span class="ev-icon">📅</span><span>${fecha}${hora ? ' — ' + hora : ''}</span></div>`;
+
+  if(props.asesor)    det += `<div class="ev-row"><span class="ev-icon">👨‍🏫</span><span>Asesor: ${props.asesor}</span></div>`;
+  if(props.recibe)    det += `<div class="ev-row"><span class="ev-icon">👤</span><span>Aprendiz: ${props.recibe}</span></div>`;
+  if(props.espacio)   det += `<div class="ev-row"><span class="ev-icon">🏫</span><span>${props.espacio} — ${props.sede || ''}</span></div>`;
+  if(props.usuario)   det += `<div class="ev-row"><span class="ev-icon">👤</span><span>${props.usuario}</span></div>`;
+  if(props.instructor)det += `<div class="ev-row"><span class="ev-icon">👨‍🏫</span><span>Instructor: ${props.instructor}</span></div>`;
+  if(props.duracion)  det += `<div class="ev-row"><span class="ev-icon">⏱</span><span>${props.duracion}</span></div>`;
+  if(props.estado)    det += `<div class="ev-row"><span class="ev-icon">📌</span><span>Estado: ${props.estado}</span></div>`;
+  if(props.motivo || props.descripcion) {
+    det += `<div class="ev-row"><span class="ev-icon">📝</span><span>${props.motivo || props.descripcion}</span></div>`;
+  }
+
+  document.getElementById('ev-detalles').innerHTML = det;
+
+  var acciones = '';
+  if(props.url) acciones += `<a href="${props.url}" style="padding:8px 16px;background:var(--sena-verde);color:#fff;border-radius:7px;text-decoration:none;font-size:12px;font-weight:600;">Ver detalle</a>`;
+  acciones += `<button onclick="cerrarModal()" style="padding:8px 16px;border:1px solid #e2e8f0;background:#fff;border-radius:7px;font-size:12px;cursor:pointer;">Cerrar</button>`;
+  document.getElementById('ev-acciones').innerHTML = acciones;
+
+  document.getElementById('evento-modal').classList.add('show');
+}
+
+function cerrarModal() {
+  document.getElementById('evento-modal').classList.remove('show');
+}
+
+document.getElementById('evento-modal').addEventListener('click', function(e) {
+  if(e.target === this) cerrarModal();
+});
+</script>
+{% endblock %}

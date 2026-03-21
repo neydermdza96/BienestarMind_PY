@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}Asesorías — BienestarMind{% endblock %}
+{% block page_title %}Asesorías{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <h2 class="section-title">Asesorías</h2>
+    <p class="section-sub">Registro y seguimiento de asesorías de bienestar</p>
+  </div>
+  {% if user.roles.all|length > 0 %}
+  <a href="{% url 'asesorias:crear' %}" class="btn-sena">
+    <i class="bi bi-plus-circle"></i> Registrar Asesoría
+  </a>
+  {% endif %}
+</div>
+
+<!-- Filtros -->
+<div class="bm-card mb-3">
+  <form method="get" class="filter-bar">
+    <input type="text" name="q" value="{{ q }}" class="search-input"
+           placeholder="🔍 Buscar por motivo, asesor, aprendiz...">
+    <select name="estado" class="filter-select">
+      <option value="">Todos los estados</option>
+      {% for val, label in estados %}
+      <option value="{{ val }}" {% if val == estado %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="filter-select" title="Desde">
+    <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="filter-select" title="Hasta">
+    <button type="submit" class="btn-sena"><i class="bi bi-search"></i> Filtrar</button>
+    <a href="{% url 'asesorias:lista' %}" class="btn-outline-sena">Limpiar</a>
+    <!-- Reportes -->
+    <div class="ms-auto d-flex gap-2 align-items-center">
+      <span style="font-size:12px;color:var(--texto-muted);">{{ total }} registro{{ total|pluralize }}</span>
+      <a href="?{{ request.GET.urlencode }}&formato=pdf" class="btn-outline-sena" style="font-size:12px;padding:5px 12px;">
+        <i class="bi bi-file-pdf"></i> PDF
+      </a>
+      <a href="?{{ request.GET.urlencode }}&formato=excel" class="btn-outline-sena" style="font-size:12px;padding:5px 12px;">
+        <i class="bi bi-file-excel"></i> Excel
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Tabla -->
+<div class="bm-card">
+  <div class="table-responsive">
+    <table class="bm-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Fecha</th>
+          <th>Asesor</th>
+          <th>Aprendiz</th>
+          <th>Ficha</th>
+          <th>Motivo</th>
+          <th>Estado</th>
+          <th>Notif.</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in asesorias %}
+        <tr>
+          <td>{{ a.pk }}</td>
+          <td style="white-space:nowrap;">
+            <strong>{{ a.fecha|date:"d/m/Y" }}</strong>
+            {% if a.hora %}<br><small style="color:var(--texto-muted)">{{ a.hora }}</small>{% endif %}
+          </td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="avatar avatar-sm">{{ a.usuario_asesor.get_initials }}</div>
+              <div>
+                <div style="font-weight:500;font-size:13px;">{{ a.usuario_asesor.nombre_completo }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="avatar avatar-sm" style="background:var(--sena-naranja-light);color:var(--sena-naranja-dark);">
+                {{ a.usuario_recibe.get_initials }}
+              </div>
+              <div style="font-size:13px;">{{ a.usuario_recibe.nombre_completo }}</div>
+            </div>
+          </td>
+          <td>
+            {% if a.ficha %}
+            <span style="font-size:11px;font-family:monospace;background:#e8f0fe;color:#3c4eb7;padding:2px 8px;border-radius:10px;">
+              {{ a.ficha.id_ficha }}
+            </span>
+            {% else %}—{% endif %}
+          </td>
+          <td style="max-width:200px;">
+            <span title="{{ a.motivo_asesoria }}" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              {{ a.motivo_asesoria|truncatechars:50 }}
+            </span>
+          </td>
+          <td>
+            <span class="badge-estado badge-{{ a.estado|lower }}">{{ a.get_estado_display }}</span>
+          </td>
+          <td style="text-align:center;">
+            {% if a.notificacion_enviada %}
+            <i class="bi bi-check-circle-fill" style="color:var(--sena-verde);font-size:16px;" title="Notificación enviada"></i>
+            {% else %}
+            <i class="bi bi-clock" style="color:#94a3b8;font-size:16px;" title="Sin notificación"></i>
+            {% endif %}
+          </td>
+          <td>
+            <div class="acciones">
+              <a href="{% url 'asesorias:editar' a.pk %}" class="btn-outline-sena" style="font-size:11px;padding:4px 8px;" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+              {% if user.roles.filter.exists %}
+              <a href="{% url 'asesorias:eliminar' a.pk %}" class="btn-outline-sena" style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;"
+                 onclick="return confirm('¿Eliminar esta asesoría?')" title="Eliminar">
+                <i class="bi bi-trash"></i>
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" style="text-align:center;padding:40px;color:var(--texto-muted);">
+            <i class="bi bi-chat-heart" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4;"></i>
+            Sin asesorías registradas con estos filtros.
+            <br><a href="{% url 'asesorias:crear' %}" class="btn-sena mt-3 d-inline-flex">+ Registrar primera asesoría</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

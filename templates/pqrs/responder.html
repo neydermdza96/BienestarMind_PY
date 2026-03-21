@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Responder PQRS — BienestarMind{% endblock %}
+{% block page_title %}Responder PQRS{% endblock %}
+{% block content %}
+<div class="section-header">
+  <div><h2 class="section-title">Responder: {{ pqrs.radicado }}</h2><p class="section-sub">{{ pqrs.get_tipo_display }} · {{ pqrs.asunto }}</p></div>
+  <a href="{% url 'pqrs:admin' %}" class="btn-outline-sena"><i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+<div class="row g-4">
+  <div class="col-12 col-lg-7">
+    <!-- Solicitud original -->
+    <div class="bm-card mb-3">
+      <h5 style="font-size:13px;font-weight:700;color:var(--sena-naranja);margin-bottom:8px;"><i class="bi bi-chat-left-text"></i> Solicitud original</h5>
+      <p style="font-size:13px;font-weight:600;margin-bottom:6px;">{{ pqrs.asunto }}</p>
+      <p style="font-size:13px;color:#334155;line-height:1.7;white-space:pre-wrap;background:#f8faf8;padding:12px;border-radius:8px;">{{ pqrs.descripcion }}</p>
+      <p style="font-size:11px;color:var(--texto-muted);margin-top:8px;">De: <strong>{{ pqrs.nombre_remitente }}</strong> · {{ pqrs.created_at|date:"d/m/Y H:i" }}</p>
+    </div>
+    <!-- Formulario respuesta -->
+    <div class="bm-card">
+      <div class="sena-stripe"></div>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Estado</label>{{ form.estado }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Prioridad</label>{{ form.prioridad }}
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Tu respuesta <span style="color:var(--sena-naranja)">*</span></label>
+          {{ form.respuesta }}
+        </div>
+        <div class="d-flex gap-3 justify-content-end">
+          <a href="{% url 'pqrs:admin' %}" class="btn-outline-sena">Cancelar</a>
+          <button type="submit" class="btn-sena"><i class="bi bi-send-fill"></i> Enviar respuesta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="bm-card">
+      <h5 style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--sena-verde);">Datos del solicitante</h5>
+      <p style="font-size:13px;font-weight:600;margin-bottom:4px;">{{ pqrs.nombre_remitente }}</p>
+      {% if pqrs.correo_contacto %}<p style="font-size:12px;color:var(--sena-verde);margin-bottom:8px;"><i class="bi bi-envelope"></i> {{ pqrs.correo_contacto }}</p>{% endif %}
+      <p style="font-size:11px;color:var(--texto-muted);">La respuesta se enviará automáticamente al correo del solicitante.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

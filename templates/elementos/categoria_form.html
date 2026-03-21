@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }} — BienestarMind{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="section-header">
+  <div><h2 class="section-title">{{ titulo }}</h2></div>
+  <a href="{% url 'elementos:categorias' %}" class="btn-outline-sena"><i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-5">
+    <div class="bm-card">
+      <div class="sena-stripe"></div>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-4"><label class="form-label">Nombre de la Categoría *</label>{{ form.descripcion }}</div>
+        <div class="d-flex gap-3 justify-content-end">
+          <a href="{% url 'elementos:categorias' %}" class="btn-outline-sena">Cancelar</a>
+          <button type="submit" class="btn-sena"><i class="bi bi-check-circle"></i> Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
