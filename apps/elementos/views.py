@@ -22,7 +22,7 @@ class ElementoForm(forms.ModelForm):
     class Meta:
         model = Elemento
         fields = ['nombre_elemento','categoria','descripcion','estado_elemento',
-                  'codigo','stock_total','stock_disponible','stock_minimo','ubicacion']
+                'codigo','stock_total','stock_disponible','stock_minimo','ubicacion']
         widgets = {
             'nombre_elemento': forms.TextInput(attrs={'class':'form-control'}),
             'categoria':       forms.Select(attrs={'class':'form-select'}),

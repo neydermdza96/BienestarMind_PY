@@ -319,7 +319,7 @@ def generar_excel_reservas_espacios(reservas):
             _data_cell(ws, i, col, val, alt)
 
     for col, w in enumerate([5, 14, 22, 18, 22, 14, 35, 14], 1):
-        ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = w
+        ws.column_dimensions[ws.cell(row=3, column=col).column_letter].width = w
     ws.freeze_panes = 'A4'
 
     buffer = io.BytesIO()
@@ -345,7 +345,7 @@ def generar_excel_usuarios(usuarios):
             _data_cell(ws, i, col, val, alt)
 
     for col, w in enumerate([20, 20, 16, 28, 16, 14, 8, 24], 1):
-        ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = w
+        ws.column_dimensions[ws.cell(row=3, column=col).column_letter].width = w
     ws.freeze_panes = 'A4'
 
     buffer = io.BytesIO()

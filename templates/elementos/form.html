@@ -16,10 +16,12 @@
           <div class="col-12">
             <label class="form-label">Nombre del Elemento <span style="color:var(--sena-naranja)">*</span></label>
             {{ form.nombre_elemento }}
+            {% if form.nombre_elemento.errors %}<div class="text-danger small">{{ form.nombre_elemento.errors|join:", " }}</div>{% endif %}
           </div>
           <div class="col-md-6">
             <label class="form-label">Categoría <span style="color:var(--sena-naranja)">*</span></label>
             {{ form.categoria }}
+            {% if form.categoria.errors %}<div class="text-danger small">{{ form.categoria.errors|join:", " }}</div>{% endif %}
           </div>
           <div class="col-md-6">
             <label class="form-label">Estado</label>
@@ -29,6 +31,30 @@
             <label class="form-label">Código (opcional)</label>
             {{ form.codigo }}
           </div>
+          <div class="col-md-6">
+            <label class="form-label">Ubicación</label>
+            {{ form.ubicacion }}
+          </div>
+
+          <div class="col-12">
+            <hr style="border-color:var(--gris-border);margin:4px 0;">
+            <p class="form-label fw-bold" style="color:var(--sena-verde)">Stock</p>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Stock Total <span style="color:var(--sena-naranja)">*</span></label>
+            {{ form.stock_total }}
+            {% if form.stock_total.errors %}<div class="text-danger small">{{ form.stock_total.errors|join:", " }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Stock Disponible <span style="color:var(--sena-naranja)">*</span></label>
+            {{ form.stock_disponible }}
+            {% if form.stock_disponible.errors %}<div class="text-danger small">{{ form.stock_disponible.errors|join:", " }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Stock Mínimo</label>
+            {{ form.stock_minimo }}
+          </div>
+
           <div class="col-12">
             <label class="form-label">Descripción</label>
             {{ form.descripcion }}
