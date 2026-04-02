@@ -1,70 +1,68 @@
-/*
-  BienestarMind — CSS adicional
-  Paleta SENA: Verde #3d9b35 / Naranja #f47920
-*/
-
-/* ── Animaciones de entrada ─────────────────────────── */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+#sidebar {
+    background-color: #1b5e20 !important; 
+    background: linear-gradient(180deg, #1b5e20 0%, #113613 100%) !important;
+    min-width: 250px;
+    box-shadow: 2px 0 15px rgba(0,0,0,0.3);
 }
-.bm-card, .stat-card {
+
+.sidebar-logo {
+    padding: 35px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.sidebar-logo img {
+    max-width: 90%;
+    height: auto;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Efecto neón base muy sutil */
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.3));
+}
+
+.sidebar-logo:hover img {
+    transform: scale(1.05);
+    /* Resplandor Neón Delicado: Blanco central + Verde Esmeralda exterior */
+    filter: 
+        drop-shadow(0 0 5px rgba(255, 255, 255, 0.8)) 
+        drop-shadow(0 0 10px rgba(76, 175, 80, 0.5))
+        brightness(1.2);
+}
+
+#sidebar .nav-link {
+    color: #e8f5e9 !important;
+    border-radius: 8px;
+    margin: 6px 15px;
+    padding: 12px 18px;
+    transition: all 0.3s ease;
+}
+
+#sidebar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+#sidebar .nav-link.active {
+    background-color: #f47920 !important;
+    color: #ffffff !important;
+    font-weight: bold;
+}
+
+.bm-card, .stat-card, .bm-table {
   animation: fadeInUp .25s ease both;
 }
 
-/* ── Scrollbar personalizado ─────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #3d9b35; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #2d7427; }
-
-/* ── Print styles para reportes ──────────────────────── */
-@media print {
-  #sidebar, #topbar, .filter-bar, .acciones, .btn-sena, .btn-outline-sena { display: none !important; }
-  #main-content { margin-left: 0 !important; padding: 0 !important; }
-  .bm-table thead th { background: #3d9b35 !important; color: #fff !important; -webkit-print-color-adjust: exact; }
-  .bm-table tbody tr:nth-child(even) { background: #f5f5f5 !important; -webkit-print-color-adjust: exact; }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Loading state ───────────────────────────────────── */
-.btn-loading { position: relative; pointer-events: none; opacity: .7; }
-.btn-loading::after {
-  content: '';
-  width: 14px; height: 14px;
-  border: 2px solid rgba(255,255,255,.4);
-  border-top-color: #fff;
-  border-radius: 50%;
-  display: inline-block;
-  animation: spin .6s linear infinite;
-  margin-left: 8px; vertical-align: middle;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-thumb { background: #3d9b35; border-radius: 10px; }
 
-/* ── Tooltip ─────────────────────────────────────────── */
-[title] { cursor: help; }
-
-/* ── Table row hover highlight ───────────────────────── */
-.bm-table tbody tr { transition: background .1s, box-shadow .1s; }
-.bm-table tbody tr:hover { box-shadow: inset 3px 0 0 var(--sena-verde); }
-
-/* ── Focus visible ───────────────────────────────────── */
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
-  outline: 2px solid var(--sena-verde);
-  outline-offset: 2px;
-}
-
-/* ── Sidebar scrollbar ───────────────────────────────── */
 #sidebar::-webkit-scrollbar { width: 4px; }
-#sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 2px; }
+#sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
 
-/* ── Logo real en sidebar ────────────────────────────────── */
-.sidebar-logo img {
-  transition: opacity .2s;
-}
-.sidebar-logo img:hover {
-  opacity: .85;
-}
-/* Quitar el fondo naranja del logo-icon si aún existe */
 .logo-icon {
   background: transparent !important;
 }
