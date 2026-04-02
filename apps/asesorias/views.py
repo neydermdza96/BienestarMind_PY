@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import HttpResponse
 from django import forms
+from django.views.decorators.cache import never_cache
 import datetime
 
 from apps.asesorias.models import Asesoria
@@ -60,7 +61,7 @@ class AsesoriaForm(forms.ModelForm):
             )
         return fecha
 
-
+@never_cache
 @login_required
 def lista_asesorias(request):
     qs = Asesoria.objects.select_related('usuario_asesor', 'usuario_recibe', 'ficha').all()
@@ -93,7 +94,7 @@ def lista_asesorias(request):
         'total': qs.count(),
     })
 
-
+@never_cache
 @login_required
 def crear_asesoria(request):
     if not request.user.tiene_rol('ADMINISTRADOR', 'INSTRUCTOR', 'COORDINADOR'):
@@ -112,7 +113,7 @@ def crear_asesoria(request):
         return redirect('asesorias:lista')
     return render(request, 'asesorias/form.html', {'form': form, 'titulo': 'Registrar Asesoria'})
 
-
+@never_cache
 @login_required
 def editar_asesoria(request, pk):
     asesoria = get_object_or_404(Asesoria, pk=pk)
@@ -125,7 +126,7 @@ def editar_asesoria(request, pk):
         return redirect('asesorias:lista')
     return render(request, 'asesorias/form.html', {'form': form, 'titulo': f'Editar Asesoria #{asesoria.pk}', 'asesoria': asesoria})
 
-
+@never_cache
 @login_required
 def eliminar_asesoria(request, pk):
     if not request.user.tiene_rol('ADMINISTRADOR'):

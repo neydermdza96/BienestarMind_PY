@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q, Count
 from django import forms
+from django.views.decorators.cache import never_cache
 
 from apps.pqrs.models import PQRS
 
@@ -82,7 +83,7 @@ def crear_pqrs(request):
 def enviado(request):
     return render(request, 'pqrs/enviado.html')
 
-
+@never_cache
 @login_required
 def mis_pqrs(request):
     """El usuario logueado ve sus propias PQRS."""
@@ -91,7 +92,7 @@ def mis_pqrs(request):
 
 
 # ── VISTAS ADMIN ───────────────────────────────────────────────────
-
+@never_cache
 @login_required
 def lista_admin(request):
     """Administradores y Coordinadores ven y gestionan todas las PQRS."""
@@ -121,7 +122,7 @@ def lista_admin(request):
         'q':q,'tipo':tipo,'estado':estado,'total':qs.count(),
     })
 
-
+@never_cache
 @login_required
 def detalle_pqrs(request, pk):
     if not request.user.tiene_rol('ADMINISTRADOR','COORDINADOR'):
@@ -133,7 +134,7 @@ def detalle_pqrs(request, pk):
         pqrs.save(update_fields=['estado'])
     return render(request,'pqrs/detalle.html',{'pqrs': pqrs})
 
-
+@never_cache
 @login_required
 def responder_pqrs(request, pk):
     if not request.user.tiene_rol('ADMINISTRADOR','COORDINADOR'):

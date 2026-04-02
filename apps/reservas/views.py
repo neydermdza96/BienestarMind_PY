@@ -9,6 +9,8 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django import forms
 import datetime
+from django.views.decorators.cache import never_cache
+
 
 from apps.elementos.models import ReservaEspacio, ReservaElemento, Elemento
 from apps.core.models import Espacio, Ficha
@@ -99,7 +101,7 @@ class ReservaElementoForm(forms.ModelForm):
 
 
 # ── RESERVAS ESPACIOS ──────────────────────────────────────────────────────
-
+@never_cache
 @login_required
 def lista_espacios(request):
     qs = ReservaEspacio.objects.select_related('espacio', 'espacio__sede', 'usuario', 'ficha').all()
@@ -135,7 +137,7 @@ def lista_espacios(request):
         'fecha_desde': f_d, 'fecha_hasta': f_h, 'total': qs.count(),
     })
 
-
+@never_cache
 @login_required
 def crear_reserva_espacio(request):
     form = ReservaEspacioForm(request.POST or None)
@@ -152,7 +154,7 @@ def crear_reserva_espacio(request):
         return redirect('reservas:espacios')
     return render(request, 'reservas/form_espacio.html', {'form': form, 'titulo': 'Reservar Espacio'})
 
-
+@never_cache
 @login_required
 def eliminar_reserva_espacio(request, pk):
     reserva = get_object_or_404(ReservaEspacio, pk=pk)
@@ -166,7 +168,7 @@ def eliminar_reserva_espacio(request, pk):
 
 
 # ── RESERVAS ELEMENTOS ─────────────────────────────────────────────────────
-
+@never_cache
 @login_required
 def lista_elementos(request):
     qs = ReservaElemento.objects.select_related('elemento', 'elemento__categoria', 'usuario', 'ficha').all()
@@ -183,7 +185,7 @@ def lista_elementos(request):
         'q': q, 'estado': estado, 'total': qs.count(),
     })
 
-
+@never_cache
 @login_required
 def crear_reserva_elemento(request):
     form = ReservaElementoForm(request.POST or None)

@@ -16,6 +16,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from django.views.decorators.cache import never_cache
 import datetime
 
 from apps.usuarios.models import Usuario, Rol, UsuarioRol, TokenRecuperacion
@@ -379,7 +380,7 @@ def password_confirmado(request):
 # ════════════════════════════════════════════════════════════════════
 # GESTIÓN DE USUARIOS (ADMIN)
 # ════════════════════════════════════════════════════════════════════
-
+@never_cache
 @login_required
 def lista_usuarios(request):
     qs = Usuario.objects.prefetch_related('roles').all()
@@ -411,7 +412,7 @@ def lista_usuarios(request):
         'total': qs.count(),
     })
 
-
+@never_cache
 @login_required
 def crear_usuario(request):
     if not request.user.tiene_rol('ADMINISTRADOR', 'COORDINADOR'):
@@ -431,7 +432,7 @@ def crear_usuario(request):
         'form': form, 'titulo': 'Nuevo Usuario', 'accion': 'Crear',
     })
 
-
+@never_cache
 @login_required
 def editar_usuario(request, pk):
     usuario    = get_object_or_404(Usuario, pk=pk)
@@ -462,7 +463,7 @@ def editar_usuario(request, pk):
         'usuario': usuario,
     })
 
-
+@never_cache
 @login_required
 def toggle_usuario(request, pk):
     if not request.user.tiene_rol('ADMINISTRADOR'):

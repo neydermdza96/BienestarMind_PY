@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.db.models import Q, Sum, Count
 from django.utils import timezone
 from django import forms
+from django.views.decorators.cache import never_cache
 import datetime
 
 from apps.elementos.models import (
@@ -60,7 +61,7 @@ class MovimientoForm(forms.Form):
 
 
 # ── ELEMENTOS CRUD ─────────────────────────────────────────────────
-
+@never_cache
 @login_required
 def lista_elementos(request):
     qs = Elemento.objects.select_related('categoria').all()
@@ -80,7 +81,7 @@ def lista_elementos(request):
                        sum(1 for e in qs if e.alerta_stock),
     })
 
-
+@never_cache
 @login_required
 def crear_elemento(request):
     if not request.user.tiene_rol('ADMINISTRADOR','COORDINADOR'):
@@ -99,7 +100,7 @@ def crear_elemento(request):
         return redirect('elementos:inventario')
     return render(request,'elementos/form.html',{'form':form,'titulo':'Nuevo Elemento'})
 
-
+@never_cache
 @login_required
 def editar_elemento(request, pk):
     if not request.user.tiene_rol('ADMINISTRADOR','COORDINADOR'):
@@ -112,7 +113,7 @@ def editar_elemento(request, pk):
         return redirect('elementos:inventario')
     return render(request,'elementos/form.html',{'form':form,'titulo':f'Editar: {el.nombre_elemento}'})
 
-
+@never_cache
 @login_required
 def eliminar_elemento(request, pk):
     if not request.user.tiene_rol('ADMINISTRADOR'):
@@ -121,14 +122,14 @@ def eliminar_elemento(request, pk):
     messages.success(request,'Elemento eliminado.')
     return redirect('elementos:lista')
 
-
+@never_cache
 @login_required
 def lista_categorias(request):
     return render(request,'elementos/categorias.html',{
         'categorias': CategoriaElemento.objects.annotate(total=Count('elementos')).all()
     })
 
-
+@never_cache
 @login_required
 def crear_categoria(request):
     if not request.user.tiene_rol('ADMINISTRADOR','COORDINADOR'):
@@ -141,7 +142,7 @@ def crear_categoria(request):
 
 
 # ── INVENTARIO ─────────────────────────────────────────────────────
-
+@never_cache
 @login_required
 def inventario_dashboard(request):
     """Dashboard de inventario con resumen, alertas y estado de todos los elementos."""
@@ -173,7 +174,7 @@ def inventario_dashboard(request):
         'q':q,'categoria':cat,
     })
 
-
+@never_cache
 @login_required
 def registrar_entrada(request, pk):
     """Registrar llegada de nuevos elementos al inventario."""
@@ -202,7 +203,7 @@ def registrar_entrada(request, pk):
         'color':'verde','icono':'bi-box-arrow-in-down',
     })
 
-
+@never_cache
 @login_required
 def registrar_salida(request, pk):
     """Registrar préstamo o salida de un elemento."""
@@ -233,7 +234,7 @@ def registrar_salida(request, pk):
         'color':'naranja','icono':'bi-box-arrow-up',
     })
 
-
+@never_cache
 @login_required
 def devolver_elemento(request, pk):
     """Registrar devolución de un elemento prestado."""
@@ -263,7 +264,7 @@ def devolver_elemento(request, pk):
         'color':'verde','icono':'bi-arrow-return-left',
     })
 
-
+@never_cache
 @login_required
 def ajustar_inventario(request, pk):
     """Ajuste manual de inventario (corrección de errores, conteo físico)."""
@@ -294,7 +295,7 @@ def ajustar_inventario(request, pk):
         'ajuste':True,
     })
 
-
+@never_cache
 @login_required
 def historial_movimientos(request):
     """Historial completo de movimientos de inventario."""

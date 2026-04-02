@@ -6,11 +6,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django import forms
+from django.views.decorators.cache import never_cache
 
 from apps.core.models import Sede, Espacio, Programa, Ficha, UsuarioFicha
 from apps.asesorias.models import Asesoria
 from apps.elementos.models import ReservaEspacio, ReservaElemento, Elemento
 from apps.usuarios.models import Usuario
+
+
 
 
 # ─── CONTEXT PROCESSOR ────────────────────────────────────────────────────
@@ -19,6 +22,7 @@ def sena_context(request):
 
 
 # ─── DASHBOARD ─────────────────────────────────────────────────────────────
+@never_cache
 @login_required
 def dashboard(request):
     return render(request, 'core/dashboard.html', {
@@ -47,7 +51,7 @@ class FichaForm(forms.ModelForm):
             'programa': forms.Select(attrs={'class': 'form-select'}),
         }
 
-
+@never_cache
 @login_required
 def fichas(request):
     qs = Ficha.objects.select_related('programa').all()
@@ -63,7 +67,7 @@ def fichas(request):
         'q': q, 'programa': prog,
     })
 
-
+@never_cache
 @login_required
 def crear_ficha(request):
     if not request.user.tiene_rol('ADMINISTRADOR', 'COORDINADOR'):
@@ -75,7 +79,7 @@ def crear_ficha(request):
         return redirect('core:fichas')
     return render(request, 'core/ficha_form.html', {'form': form, 'titulo': 'Nueva Ficha'})
 
-
+@never_cache
 @login_required
 def editar_ficha(request, pk):
     if not request.user.tiene_rol('ADMINISTRADOR', 'COORDINADOR'):
@@ -87,7 +91,7 @@ def editar_ficha(request, pk):
         return redirect('core:fichas')
     return render(request, 'core/ficha_form.html', {'form': form, 'titulo': f'Editar Ficha {ficha.id_ficha}'})
 
-
+@never_cache
 @login_required
 def eliminar_ficha(request, pk):
     if not request.user.tiene_rol('ADMINISTRADOR'):
@@ -107,13 +111,13 @@ class ProgramaForm(forms.ModelForm):
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
-
+@never_cache
 @login_required
 def programas(request):
     qs = Programa.objects.prefetch_related('fichas').all()
     return render(request, 'core/programas.html', {'programas': qs})
 
-
+@never_cache
 @login_required
 def crear_programa(request):
     if not request.user.tiene_rol('ADMINISTRADOR', 'COORDINADOR'):
@@ -124,7 +128,7 @@ def crear_programa(request):
         return redirect('core:programas')
     return render(request, 'core/programa_form.html', {'form': form, 'titulo': 'Nuevo Programa'})
 
-
+@never_cache
 @login_required
 def editar_programa(request, pk):
     if not request.user.tiene_rol('ADMINISTRADOR', 'COORDINADOR'):
@@ -161,13 +165,13 @@ class EspacioForm(forms.ModelForm):
             'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
-
+@never_cache
 @login_required
 def sedes(request):
     qs = Sede.objects.prefetch_related('espacios').all()
     return render(request, 'core/sedes.html', {'sedes': qs})
 
-
+@never_cache
 @login_required
 def crear_sede(request):
     if not request.user.tiene_rol('ADMINISTRADOR'):
@@ -178,7 +182,7 @@ def crear_sede(request):
         return redirect('core:sedes')
     return render(request, 'core/sede_form.html', {'form': form, 'titulo': 'Nueva Sede'})
 
-
+@never_cache
 @login_required
 def editar_sede(request, pk):
     if not request.user.tiene_rol('ADMINISTRADOR'):
@@ -190,7 +194,7 @@ def editar_sede(request, pk):
         return redirect('core:sedes')
     return render(request, 'core/sede_form.html', {'form': form, 'titulo': f'Editar: {sede.nombre_sede}'})
 
-
+@never_cache
 @login_required
 def crear_espacio(request):
     if not request.user.tiene_rol('ADMINISTRADOR', 'COORDINADOR'):
@@ -201,7 +205,7 @@ def crear_espacio(request):
         return redirect('core:sedes')
     return render(request, 'core/espacio_form.html', {'form': form, 'titulo': 'Nuevo Espacio'})
 
-
+@never_cache
 @login_required
 def editar_espacio(request, pk):
     if not request.user.tiene_rol('ADMINISTRADOR', 'COORDINADOR'):
@@ -213,7 +217,7 @@ def editar_espacio(request, pk):
         return redirect('core:sedes')
     return render(request, 'core/espacio_form.html', {'form': form, 'titulo': f'Editar: {esp.nombre_del_espacio}'})
 
-
+@never_cache
 @login_required
 def eliminar_espacio(request, pk):
     if not request.user.tiene_rol('ADMINISTRADOR'):
@@ -237,6 +241,7 @@ def landing(request):
 
 
 # ─── PANEL INSTRUCTOR ─────────────────────────────────────────────
+@never_cache
 @login_required
 def panel_instructor(request):
     if not request.user.tiene_rol('INSTRUCTOR','ADMINISTRADOR','COORDINADOR'):
@@ -263,6 +268,7 @@ def panel_instructor(request):
 
 
 # ─── PANEL COORDINADOR ────────────────────────────────────────────
+@never_cache
 @login_required
 def panel_coordinador(request):
     if not request.user.tiene_rol('COORDINADOR','ADMINISTRADOR'):
@@ -309,7 +315,7 @@ def panel_coordinador(request):
 # ═══════════════════════════════════════════════════════════════════
 import json
 from django.http import JsonResponse
-
+@never_cache
 @login_required
 def calendario(request):
     """Vista del calendario visual con asesorías y reservas de espacios."""
@@ -319,7 +325,7 @@ def calendario(request):
         'espacios': espacios,
     })
 
-
+@never_cache
 @login_required
 def calendario_api(request):
     """
@@ -477,7 +483,7 @@ class HorarioForm(dj_forms.Form):
             raise dj_forms.ValidationError('La hora de fin debe ser posterior a la de inicio.')
         return cleaned
 
-
+@never_cache
 @login_required
 def horarios(request):
     """Lista de horarios del instructor logueado (o todos si es admin)."""
@@ -493,7 +499,7 @@ def horarios(request):
         'instructores': instructores,
     })
 
-
+@never_cache
 @login_required
 def crear_horario(request):
     """Crear un bloque de horario."""
@@ -514,7 +520,7 @@ def crear_horario(request):
         return redirect('core:calendario')
     return render(request, 'core/horario_form.html', {'form': form})
 
-
+@never_cache
 @login_required
 def eliminar_horario(request, pk):
     from apps.usuarios.models import HorarioInstructor
@@ -525,7 +531,7 @@ def eliminar_horario(request, pk):
     messages.success(request, 'Bloque eliminado.')
     return redirect('core:horarios')
 
-
+@never_cache
 @login_required
 def horarios_api(request):
     """API JSON de horarios para el calendario."""
@@ -541,7 +547,7 @@ def horarios_api(request):
 # ═══════════════════════════════════════════════════════════════════
 # NOTIFICACIONES IN-APP
 # ═══════════════════════════════════════════════════════════════════
-
+@never_cache
 @login_required
 def notificaciones(request):
     """Lista de todas las notificaciones del usuario."""
@@ -549,7 +555,7 @@ def notificaciones(request):
     notifs = Notificacion.objects.filter(usuario=request.user)
     return render(request, 'core/notificaciones.html', {'notificaciones': notifs})
 
-
+@never_cache
 @login_required
 def leer_notificacion(request, pk):
     """Marcar una notificación como leída y redirigir a su URL."""
@@ -559,7 +565,7 @@ def leer_notificacion(request, pk):
     n.save(update_fields=['leida'])
     return redirect(n.url or 'core:dashboard')
 
-
+@never_cache
 @login_required
 def leer_todas(request):
     """Marcar todas las notificaciones como leídas."""
@@ -568,7 +574,7 @@ def leer_todas(request):
     messages.success(request,'Todas las notificaciones marcadas como leídas.')
     return redirect('core:notificaciones')
 
-
+@never_cache
 @login_required
 def notif_conteo_api(request):
     """API JSON: devuelve el número de notificaciones no leídas."""
@@ -583,7 +589,7 @@ def notif_conteo_api(request):
 # ═══════════════════════════════════════════════════════════════════
 # MÉTRICAS GRÁFICAS (API JSON para Chart.js)
 # ═══════════════════════════════════════════════════════════════════
-
+@never_cache
 @login_required
 def metricas_api(request):
     """

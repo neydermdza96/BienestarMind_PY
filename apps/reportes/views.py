@@ -9,13 +9,14 @@ from django.http import HttpResponse
 from apps.asesorias.models import Asesoria
 from apps.elementos.models import ReservaEspacio, ReservaElemento
 from apps.usuarios.models import Usuario
+from django.views.decorators.cache import never_cache
 from apps.reportes.generadores import (
     generar_pdf_asesorias, generar_pdf_reservas_espacios,
     generar_pdf_reservas_elementos, generar_pdf_usuarios,
     generar_excel_asesorias, generar_excel_reservas_espacios, generar_excel_usuarios,
 )
 
-
+@never_cache
 @login_required
 def index(request):
     contexto = {
@@ -37,7 +38,7 @@ def _filtrar_asesorias(request):
     if estado: qs = qs.filter(estado=estado)
     return qs
 
-
+@never_cache
 @login_required
 def reporte_asesorias_pdf(request):
     qs = _filtrar_asesorias(request)
@@ -46,7 +47,7 @@ def reporte_asesorias_pdf(request):
     resp['Content-Disposition'] = 'attachment; filename="asesorias_bienestarmind.pdf"'
     return resp
 
-
+@never_cache
 @login_required
 def reporte_asesorias_excel(request):
     qs = _filtrar_asesorias(request)
@@ -55,7 +56,7 @@ def reporte_asesorias_excel(request):
     resp['Content-Disposition'] = 'attachment; filename="asesorias_bienestarmind.xlsx"'
     return resp
 
-
+@never_cache
 @login_required
 def reporte_reservas_espacios_pdf(request):
     qs = ReservaEspacio.objects.select_related('espacio', 'espacio__sede', 'usuario', 'ficha').all()
@@ -64,7 +65,7 @@ def reporte_reservas_espacios_pdf(request):
     resp['Content-Disposition'] = 'attachment; filename="reservas_espacios.pdf"'
     return resp
 
-
+@never_cache
 @login_required
 def reporte_reservas_espacios_excel(request):
     qs = ReservaEspacio.objects.select_related('espacio', 'espacio__sede', 'usuario', 'ficha').all()
@@ -73,7 +74,7 @@ def reporte_reservas_espacios_excel(request):
     resp['Content-Disposition'] = 'attachment; filename="reservas_espacios.xlsx"'
     return resp
 
-
+@never_cache
 @login_required
 def reporte_usuarios_pdf(request):
     qs = Usuario.objects.prefetch_related('roles').all()
@@ -82,7 +83,7 @@ def reporte_usuarios_pdf(request):
     resp['Content-Disposition'] = 'attachment; filename="usuarios_bienestarmind.pdf"'
     return resp
 
-
+@never_cache
 @login_required
 def reporte_usuarios_excel(request):
     qs = Usuario.objects.prefetch_related('roles').all()
