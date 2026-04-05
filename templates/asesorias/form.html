@@ -46,22 +46,25 @@
             {{ form.usuario_asesor }}
             {% if form.usuario_asesor.errors %}<div class="text-danger" style="font-size:12px;">{{ form.usuario_asesor.errors|join:", " }}</div>{% endif %}
           </div>
-
+          {% if not es_aprendiz %}
           <div class="col-md-6">
             <label class="form-label">Aprendiz que recibe <span style="color:var(--sena-naranja)">*</span></label>
             {{ form.usuario_recibe }}
             {% if form.usuario_recibe.errors %}<div class="text-danger" style="font-size:12px;">{{ form.usuario_recibe.errors|join:", " }}</div>{% endif %}
           </div>
+          {% endif %}
 
           <div class="col-md-6">
             <label class="form-label">Ficha (opcional)</label>
             {{ form.ficha }}
           </div>
-
+          
+          {% if not es_aprendiz %}
           <div class="col-md-6">
             <label class="form-label">Estado</label>
             {{ form.estado }}
           </div>
+          {% endif %}
 
           <div class="col-12">
             <label class="form-label">Motivo de la Asesoría <span style="color:var(--sena-naranja)">*</span></label>

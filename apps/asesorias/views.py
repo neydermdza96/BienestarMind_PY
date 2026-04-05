@@ -48,6 +48,10 @@ class AsesoriaForm(forms.ModelForm):
         self.fields['estado'].required = False
         # Bloquear fechas pasadas en el selector del navegador (capa cliente)
         self.fields['fecha'].widget.attrs['min'] = datetime.date.today().isoformat()
+        # Si es APRENDIZ, usuario_recibe no es requerido en el form
+        if user and user.es_aprendiz:
+            self.fields['usuario_recibe'].required = False
+            self.fields['estado'].required = False
 
     def clean_fecha(self):
         """Capa servidor: rechaza fechas anteriores a hoy aunque se manipule el HTML."""
@@ -65,6 +69,10 @@ class AsesoriaForm(forms.ModelForm):
 @login_required
 def lista_asesorias(request):
     qs = Asesoria.objects.select_related('usuario_asesor', 'usuario_recibe', 'ficha').all()
+    if request.user.es_aprendiz:
+        qs = qs.filter(usuario_recibe=request.user)
+
+
     q = request.GET.get('q', '')
     estado = request.GET.get('estado', '')
     fecha_d = request.GET.get('fecha_desde', '')
@@ -97,40 +105,74 @@ def lista_asesorias(request):
 @never_cache
 @login_required
 def crear_asesoria(request):
-    if not request.user.tiene_rol('ADMINISTRADOR', 'INSTRUCTOR', 'COORDINADOR'):
-        messages.error(request, 'No tienes permisos para registrar asesorias.')
-        return redirect('asesorias:lista')
     form = AsesoriaForm(request.POST or None, user=request.user)
     if request.method == 'POST' and form.is_valid():
         asesoria = form.save(commit=False)
-        asesoria.estado = 'CONFIRMADA'
+        # Si es APRENDIZ, el receptor es él mismo y el estado queda PENDIENTE
+        if request.user.es_aprendiz:
+            asesoria.usuario_recibe = request.user
+            asesoria.estado = 'PENDIENTE'
+        else:
+            asesoria.estado = 'CONFIRMADA'
         asesoria.save()
         try:
             notificar_asesoria_completo(asesoria)
-            messages.success(request, 'Asesoria registrada. Notificaciones enviadas por email, SMS y WhatsApp.')
+            messages.success(request, 'Asesoría registrada. Notificaciones enviadas.')
         except Exception:
-            messages.success(request, 'Asesoria registrada. (Notificaciones en modo prueba)')
+            messages.success(request, 'Asesoría registrada. (Notificaciones en modo prueba)')
         return redirect('asesorias:lista')
-    return render(request, 'asesorias/form.html', {'form': form, 'titulo': 'Registrar Asesoria'})
+    return render(request, 'asesorias/form.html', {
+        'form': form,
+        'titulo': 'Solicitar Asesoría' if request.user.es_aprendiz else 'Registrar Asesoría',
+        'es_aprendiz': request.user.es_aprendiz,
+    })
 
 @never_cache
 @login_required
 def editar_asesoria(request, pk):
     asesoria = get_object_or_404(Asesoria, pk=pk)
-    if not request.user.tiene_rol('ADMINISTRADOR', 'INSTRUCTOR', 'COORDINADOR'):
+    # APRENDIZ solo puede editar sus propias asesorías y solo si están PENDIENTES
+    if request.user.es_aprendiz:
+        if asesoria.usuario_recibe != request.user:
+            messages.error(request, 'No puedes editar asesorías de otros usuarios.')
+            return redirect('asesorias:lista')
+        if asesoria.estado != 'PENDIENTE':
+            messages.error(request, 'Solo puedes editar asesorías en estado Pendiente.')
+            return redirect('asesorias:lista')
+    elif not request.user.tiene_rol('ADMINISTRADOR', 'INSTRUCTOR', 'COORDINADOR'):
         messages.error(request, 'No tienes permisos.'); return redirect('asesorias:lista')
     form = AsesoriaForm(request.POST or None, instance=asesoria, user=request.user)
     if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, 'Asesoria actualizada.')
+        asesoria = form.save(commit=False)
+        if request.user.es_aprendiz:
+            asesoria.usuario_recibe = request.user
+            asesoria.estado = 'PENDIENTE'
+        asesoria.save()
+        messages.success(request, 'Asesoría actualizada.')
         return redirect('asesorias:lista')
-    return render(request, 'asesorias/form.html', {'form': form, 'titulo': f'Editar Asesoria #{asesoria.pk}', 'asesoria': asesoria})
+    return render(request, 'asesorias/form.html', {
+        'form': form,
+        'titulo': f'Editar Asesoría #{asesoria.pk}',
+        'asesoria': asesoria,
+        'es_aprendiz': request.user.es_aprendiz,
+    })
+
 
 @never_cache
 @login_required
 def eliminar_asesoria(request, pk):
-    if not request.user.tiene_rol('ADMINISTRADOR'):
-        messages.error(request, 'Solo administradores pueden eliminar.'); return redirect('asesorias:lista')
-    get_object_or_404(Asesoria, pk=pk).delete()
-    messages.success(request, 'Asesoria eliminada.')
+    asesoria = get_object_or_404(Asesoria, pk=pk)
+    # APRENDIZ solo puede eliminar sus propias asesorías PENDIENTES
+    if request.user.es_aprendiz:
+        if asesoria.usuario_recibe != request.user:
+            messages.error(request, 'No puedes eliminar asesorías de otros usuarios.')
+            return redirect('asesorias:lista')
+        if asesoria.estado != 'PENDIENTE':
+            messages.error(request, 'Solo puedes eliminar asesorías en estado Pendiente.')
+            return redirect('asesorias:lista')
+    elif not request.user.tiene_rol('ADMINISTRADOR'):
+        messages.error(request, 'Solo administradores pueden eliminar.')
+        return redirect('asesorias:lista')
+    asesoria.delete()
+    messages.success(request, 'Asesoría eliminada.')
     return redirect('asesorias:lista')

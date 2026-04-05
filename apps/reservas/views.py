@@ -105,6 +105,8 @@ class ReservaElementoForm(forms.ModelForm):
 @login_required
 def lista_espacios(request):
     qs = ReservaEspacio.objects.select_related('espacio', 'espacio__sede', 'usuario', 'ficha').all()
+    if request.user.es_aprendiz:
+        qs = qs.filter(usuario=request.user)
     q = request.GET.get('q', '')
     estado = request.GET.get('estado', '')
     sede = request.GET.get('sede', '')
@@ -144,7 +146,7 @@ def crear_reserva_espacio(request):
     if request.method == 'POST' and form.is_valid():
         reserva = form.save(commit=False)
         reserva.usuario = request.user
-        reserva.estado = 'CONFIRMADA'
+        reserva.estado = 'PENDIENTE'
         reserva.save()
         try:
             notificar_reserva_espacio_completo(reserva)
@@ -172,6 +174,8 @@ def eliminar_reserva_espacio(request, pk):
 @login_required
 def lista_elementos(request):
     qs = ReservaElemento.objects.select_related('elemento', 'elemento__categoria', 'usuario', 'ficha').all()
+    if request.user.es_aprendiz:
+        qs = qs.filter(usuario=request.user)
     q = request.GET.get('q', '')
     estado = request.GET.get('estado', '')
     if q:
@@ -192,7 +196,7 @@ def crear_reserva_elemento(request):
     if request.method == 'POST' and form.is_valid():
         reserva = form.save(commit=False)
         reserva.usuario = request.user
-        reserva.estado = 'APROBADA'
+        reserva.estado = 'PENDIENTE'
         reserva.save()
         reserva.elemento.estado_elemento = 'EN_USO'
         reserva.elemento.save()
@@ -203,3 +207,51 @@ def crear_reserva_elemento(request):
             messages.success(request, 'Solicitud de elemento registrada.')
         return redirect('reservas:elementos')
     return render(request, 'reservas/form_elemento.html', {'form': form, 'titulo': 'Solicitar Elemento'})
+
+@never_cache
+@login_required
+def aprobar_reserva_espacio(request, pk):
+    if not request.user.tiene_rol('ADMINISTRADOR', 'COORDINADOR'):
+        messages.error(request, 'No tienes permisos para aprobar reservas.')
+        return redirect('reservas:espacios')
+    reserva = get_object_or_404(ReservaEspacio, pk=pk)
+    reserva.estado = 'CONFIRMADA'
+    reserva.save()
+    messages.success(request, f'Reserva #{pk} aprobada correctamente.')
+    return redirect('reservas:espacios')
+
+@never_cache
+@login_required
+def rechazar_reserva_espacio(request, pk):
+    if not request.user.tiene_rol('ADMINISTRADOR', 'COORDINADOR'):
+        messages.error(request, 'No tienes permisos para rechazar reservas.')
+        return redirect('reservas:espacios')
+    reserva = get_object_or_404(ReservaEspacio, pk=pk)
+    reserva.estado = 'CANCELADA'
+    reserva.save()
+    messages.success(request, f'Reserva #{pk} rechazada.')
+    return redirect('reservas:espacios')
+
+@never_cache
+@login_required
+def aprobar_reserva_elemento(request, pk):
+    if not request.user.tiene_rol('ADMINISTRADOR', 'COORDINADOR'):
+        messages.error(request, 'No tienes permisos para aprobar reservas.')
+        return redirect('reservas:elementos')
+    reserva = get_object_or_404(ReservaElemento, pk=pk)
+    reserva.estado = 'APROBADA'
+    reserva.save()
+    messages.success(request, f'Reserva #{pk} aprobada correctamente.')
+    return redirect('reservas:elementos')
+
+@never_cache
+@login_required
+def rechazar_reserva_elemento(request, pk):
+    if not request.user.tiene_rol('ADMINISTRADOR', 'COORDINADOR'):
+        messages.error(request, 'No tienes permisos para rechazar reservas.')
+        return redirect('reservas:elementos')
+    reserva = get_object_or_404(ReservaElemento, pk=pk)
+    reserva.estado = 'CANCELADA'
+    reserva.save()
+    messages.success(request, f'Reserva #{pk} rechazada.')
+    return redirect('reservas:elementos')

@@ -69,3 +69,14 @@ EMAIL_HOST_PASSWORD=xxxx xxxx xxxx xxxx   # App Password de Google
 - Chart.js 4.4.0
 - ReportLab (PDF) + openpyxl (Excel)
 - Twilio (SMS/WhatsApp)
+
+## Equipo de Desarrollo
+Proyecto desarrollado con compromiso por aprendices ADSO:
+
+SCRUM # 2
+Neyder Mendoza
+Astrid Alvarez
+Tatiana Bautista
+Samuel Cardenas
+
+© 2026 — BienestarMind. Innovación para la comunidad SENA.

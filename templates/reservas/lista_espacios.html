@@ -109,18 +109,33 @@
             {% endif %}
           </td>
           <td>
-            <div class="acciones">
-              {% if r.estado != 'CANCELADA' %}
-              <a href="{% url 'reservas:espacios_cancelar' r.pk %}"
-                 class="btn-outline-sena"
-                 style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;"
-                 onclick="return confirm('¿Cancelar esta reserva?')"
-                 title="Cancelar">
-                <i class="bi bi-x-circle"></i>
-              </a>
-              {% endif %}
-            </div>
-          </td>
+  <div class="acciones">
+    {% if r.estado == 'PENDIENTE' and user.es_admin_o_coordinador %}
+    <a href="{% url 'reservas:espacios_aprobar' r.pk %}"
+       class="btn-sena"
+       style="font-size:11px;padding:4px 8px;"
+       onclick="return confirm('¿Aprobar esta reserva?')"
+       title="Aprobar">
+      <i class="bi bi-check-circle"></i>
+    </a>
+    <a href="{% url 'reservas:espacios_rechazar' r.pk %}"
+       class="btn-outline-sena"
+       style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;"
+       onclick="return confirm('¿Rechazar esta reserva?')"
+       title="Rechazar">
+      <i class="bi bi-x-circle"></i>
+    </a>
+    {% elif r.estado == 'CONFIRMADA' and user.es_admin_o_coordinador %}
+    <a href="{% url 'reservas:espacios_cancelar' r.pk %}"
+       class="btn-outline-sena"
+       style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;"
+       onclick="return confirm('¿Cancelar esta reserva?')"
+       title="Cancelar">
+      <i class="bi bi-x-circle"></i>
+    </a>
+    {% endif %}
+  </div>
+</td>
         </tr>
         {% empty %}
         <tr>
