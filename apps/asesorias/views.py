@@ -64,13 +64,44 @@ class AsesoriaForm(forms.ModelForm):
                 f'Fecha ingresada: {fecha.strftime("%d/%m/%Y")}.'
             )
         return fecha
+    
+    def clean(self):
+        cleaned = super().clean()
+        fecha = cleaned.get('fecha')
+        hora = cleaned.get('hora')
+        asesor = cleaned.get('usuario_asesor')
+
+        if fecha and asesor:
+            # Verificar que el instructor no tenga otra asesoría a la misma hora
+            conflicto = Asesoria.objects.filter(
+                fecha=fecha,
+                usuario_asesor=asesor,
+                estado__in=['PENDIENTE', 'CONFIRMADA']
+            ).exclude(pk=self.instance.pk if self.instance.pk else None)
+
+            if hora:
+                conflicto = conflicto.filter(hora=hora)
+
+            if conflicto.exists():
+                raise forms.ValidationError(
+                    f'El instructor {asesor.nombre_completo} ya tiene una asesoría '
+                    f'asignada para el {fecha.strftime("%d/%m/%Y")}'
+                    f'{" a las " + hora.strftime("%H:%M") if hora else ""}. '
+                    f'Por favor elige otro horario.'
+                )
+            return cleaned
 
 @never_cache
 @login_required
 def lista_asesorias(request):
     qs = Asesoria.objects.select_related('usuario_asesor', 'usuario_recibe', 'ficha').all()
+    ##para aprendiz
     if request.user.es_aprendiz:
         qs = qs.filter(usuario_recibe=request.user)
+
+    ##para intructor
+    elif request.user.es_instructor:
+        qs = qs.filter(usuario_asesor=request.user)
 
 
     q = request.GET.get('q', '')

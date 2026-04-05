@@ -74,9 +74,10 @@ EMAIL_HOST_PASSWORD=xxxx xxxx xxxx xxxx   # App Password de Google
 Proyecto desarrollado con compromiso por aprendices ADSO:
 
 SCRUM # 2
-Neyder Mendoza
-Astrid Alvarez
-Tatiana Bautista
-Samuel Cardenas
+
+-Neyder Mendoza
+-Astrid Alvarez
+-Tatiana Bautista
+-Samuel Cardenas
 
 © 2026 — BienestarMind. Innovación para la comunidad SENA.

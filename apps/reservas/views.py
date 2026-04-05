@@ -38,11 +38,9 @@ class ReservaEspacioForm(forms.ModelForm):
         self.fields['ficha'].queryset = Ficha.objects.all()
         self.fields['ficha'].required = False
         self.fields['hora_inicio'].required = False
-        # Bloquear fechas pasadas en el selector del navegador (capa cliente)
         self.fields['fecha_reserva'].widget.attrs['min'] = datetime.date.today().isoformat()
 
     def clean_fecha_reserva(self):
-        """Capa servidor: rechaza fechas anteriores a hoy aunque se manipule el HTML."""
         fecha = self.cleaned_data.get('fecha_reserva')
         hoy = datetime.date.today()
         if fecha and fecha < hoy:
@@ -57,13 +55,39 @@ class ReservaEspacioForm(forms.ModelForm):
         cleaned = super().clean()
         espacio = cleaned.get('espacio')
         fecha = cleaned.get('fecha_reserva')
+        hora_inicio = cleaned.get('hora_inicio')
+        duracion = cleaned.get('duracion')
+
         if espacio and fecha:
-            conflicto = ReservaEspacio.objects.filter(
-                espacio=espacio, fecha_reserva=fecha, estado='CONFIRMADA',
+            conflictos = ReservaEspacio.objects.filter(
+                espacio=espacio,
+                fecha_reserva=fecha,
+                estado__in=['PENDIENTE', 'CONFIRMADA'],
             ).exclude(pk=self.instance.pk if self.instance.pk else None)
-            if conflicto.exists():
+
+            if hora_inicio and duracion:
+                hora_fin_nueva = (
+                    datetime.datetime.combine(fecha, hora_inicio) +
+                    datetime.timedelta(minutes=duracion)
+                ).time()
+                for reserva in conflictos:
+                    if reserva.hora_inicio and reserva.duracion:
+                        hora_fin_existente = (
+                            datetime.datetime.combine(fecha, reserva.hora_inicio) +
+                            datetime.timedelta(minutes=reserva.duracion)
+                        ).time()
+                        if hora_inicio < hora_fin_existente and hora_fin_nueva > reserva.hora_inicio:
+                            raise forms.ValidationError(
+                                f'El espacio "{espacio.nombre_del_espacio}" ya tiene una reserva '
+                                f'entre {reserva.hora_inicio.strftime("%H:%M")} y '
+                                f'{hora_fin_existente.strftime("%H:%M")} '
+                                f'el {fecha.strftime("%d/%m/%Y")}. '
+                                f'Por favor elige otro horario.'
+                            )
+            elif conflictos.exists():
                 raise forms.ValidationError(
-                    f'El espacio "{espacio.nombre_del_espacio}" ya tiene una reserva confirmada para el {fecha.strftime("%d/%m/%Y")}.'
+                    f'El espacio "{espacio.nombre_del_espacio}" ya tiene una reserva '
+                    f'confirmada para el {fecha.strftime("%d/%m/%Y")}.'
                 )
         return cleaned
 
@@ -105,8 +129,10 @@ class ReservaElementoForm(forms.ModelForm):
 @login_required
 def lista_espacios(request):
     qs = ReservaEspacio.objects.select_related('espacio', 'espacio__sede', 'usuario', 'ficha').all()
-    if request.user.es_aprendiz:
+    ##Para aprendiza y instructor
+    if request.user.es_aprendiz or request.user.es_instructor:
         qs = qs.filter(usuario=request.user)
+
     q = request.GET.get('q', '')
     estado = request.GET.get('estado', '')
     sede = request.GET.get('sede', '')
@@ -174,8 +200,10 @@ def eliminar_reserva_espacio(request, pk):
 @login_required
 def lista_elementos(request):
     qs = ReservaElemento.objects.select_related('elemento', 'elemento__categoria', 'usuario', 'ficha').all()
-    if request.user.es_aprendiz:
+    ##Para aprendiz y instructor
+    if request.user.es_aprendiz or request.user.es_instructor:
         qs = qs.filter(usuario=request.user)
+
     q = request.GET.get('q', '')
     estado = request.GET.get('estado', '')
     if q:
