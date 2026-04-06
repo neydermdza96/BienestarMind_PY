@@ -25,6 +25,28 @@ def sena_context(request):
 @never_cache
 @login_required
 def dashboard(request):
+    user = request.user
+
+    # ── Dashboard APRENDIZ: solo sus propios datos ──────────────────────────
+    if user.es_aprendiz:
+        mis_asesorias = Asesoria.objects.filter(usuario_recibe=user)
+        mis_reservas_espacios = ReservaEspacio.objects.filter(usuario=user)
+        mis_reservas_elementos = ReservaElemento.objects.filter(usuario=user)
+
+        return render(request, 'core/dashboard_aprendiz.html', {
+            'stats': {
+                'asesorias': mis_asesorias.count(),
+                'asesorias_pendientes': mis_asesorias.filter(estado='PENDIENTE').count(),
+                'asesorias_confirmadas': mis_asesorias.filter(estado='CONFIRMADA').count(),
+                'reservas_espacios': mis_reservas_espacios.count(),
+                'reservas_elementos': mis_reservas_elementos.count(),
+            },
+            'ultimas_asesorias': mis_asesorias.select_related(
+                'usuario_asesor'
+            ).order_by('-created_at')[:5],
+        })
+
+    # ── Dashboard STAFF: vista global ──────────────────────────────────────
     return render(request, 'core/dashboard.html', {
         'stats': {
             'usuarios': Usuario.objects.count(),
@@ -34,7 +56,9 @@ def dashboard(request):
             'fichas': Ficha.objects.count(),
             'elementos': Elemento.objects.count(),
         },
-        'ultimas_asesorias': Asesoria.objects.select_related('usuario_recibe', 'usuario_asesor').order_by('-created_at')[:5],
+        'ultimas_asesorias': Asesoria.objects.select_related(
+            'usuario_recibe', 'usuario_asesor'
+        ).order_by('-created_at')[:5],
         'sedes': Sede.objects.prefetch_related('espacios').all(),
     })
 

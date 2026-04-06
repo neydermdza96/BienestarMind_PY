@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}Mi Panel — BienestarMind{% endblock %}
+{% block page_title %}Mi Panel{% endblock %}
+
+{% block content %}
+<div class="sena-stripe"></div>
+
+<!-- Saludo -->
+<div class="mb-4">
+  <h2 class="fw-700 mb-1" style="font-size:20px;">Bienvenido, {{ user.nombres }} 👋</h2>
+  <p style="color:var(--texto-muted);font-size:13px;margin:0;">
+    Aquí puedes ver el resumen de tus asesorías y reservas.
+  </p>
+</div>
+
+<!-- Stats del aprendiz -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <p class="stat-num" style="color:var(--sena-verde)">{{ stats.asesorias }}</p>
+          <p class="stat-label">Mis Asesorías</p>
+        </div>
+        <i class="bi bi-chat-heart stat-icon" style="color:var(--sena-verde)"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="stat-card naranja">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <p class="stat-num" style="color:var(--sena-naranja)">{{ stats.asesorias_pendientes }}</p>
+          <p class="stat-label">Pendientes</p>
+        </div>
+        <i class="bi bi-hourglass-split stat-icon" style="color:var(--sena-naranja)"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <p class="stat-num" style="color:var(--sena-verde)">{{ stats.asesorias_confirmadas }}</p>
+          <p class="stat-label">Confirmadas</p>
+        </div>
+        <i class="bi bi-check-circle stat-icon" style="color:var(--sena-verde)"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="stat-card naranja">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <p class="stat-num" style="color:var(--sena-naranja)">{{ stats.reservas_espacios }}</p>
+          <p class="stat-label">Res. Espacios</p>
+        </div>
+        <i class="bi bi-building stat-icon" style="color:var(--sena-naranja)"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <p class="stat-num" style="color:var(--sena-verde)">{{ stats.reservas_elementos }}</p>
+          <p class="stat-label">Res. Elementos</p>
+        </div>
+        <i class="bi bi-box stat-icon" style="color:var(--sena-verde)"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Acciones rápidas -->
+<div class="bm-card mb-4">
+  <h5 class="fw-600 mb-3" style="font-size:13px;color:var(--sena-verde)">
+    <i class="bi bi-lightning-fill"></i> Acciones Rápidas
+  </h5>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'asesorias:crear' %}" class="btn-sena">
+      <i class="bi bi-plus-circle"></i> Solicitar Asesoría
+    </a>
+    <a href="{% url 'reservas:espacios_crear' %}" class="btn-sena btn-naranja">
+      <i class="bi bi-building-add"></i> Reservar Espacio
+    </a>
+    <a href="{% url 'core:calendario' %}" class="btn-outline-sena">
+      <i class="bi bi-calendar3"></i> Ver Calendario
+    </a>
+    <a href="{% url 'pqrs:crear' %}" class="btn-outline-sena">
+      <i class="bi bi-headset"></i> PQRS
+    </a>
+  </div>
+</div>
+
+<!-- Mis últimas asesorías -->
+<div class="bm-card">
+  <h5 class="fw-600 mb-3" style="font-size:13px;color:var(--sena-verde)">
+    <i class="bi bi-clock-history"></i> Mis Últimas Asesorías
+  </h5>
+  {% if ultimas_asesorias %}
+  <div class="table-responsive">
+    <table class="table table-hover" style="font-size:13px;">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Motivo</th>
+          <th>Instructor</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in ultimas_asesorias %}
+        <tr>
+          <td>{{ a.fecha|date:"d/m/Y" }}</td>
+          <td>{{ a.hora|default:"—" }}</td>
+          <td>{{ a.motivo_asesoria|truncatechars:40 }}</td>
+          <td>{{ a.usuario_asesor.nombre_completo|default:"—" }}</td>
+          <td>
+            <span class="badge
+              {% if a.estado == 'CONFIRMADA' %}bg-success
+              {% elif a.estado == 'PENDIENTE' %}bg-warning text-dark
+              {% elif a.estado == 'CANCELADA' %}bg-danger
+              {% else %}bg-secondary{% endif %}">
+              {{ a.get_estado_display }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <a href="{% url 'asesorias:lista' %}" class="btn-outline-sena mt-2" style="font-size:12px;">
+    Ver todas mis asesorías <i class="bi bi-arrow-right"></i>
+  </a>
+  {% else %}
+  <p style="color:var(--texto-muted);font-size:13px;">Aún no tienes asesorías registradas.</p>
+  <a href="{% url 'asesorias:crear' %}" class="btn-sena mt-2">
+    <i class="bi bi-plus-circle"></i> Solicitar tu primera asesoría
+  </a>
+  {% endif %}
+</div>
+{% endblock %}
