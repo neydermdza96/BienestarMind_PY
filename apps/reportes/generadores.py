@@ -352,3 +352,36 @@ def generar_excel_usuarios(usuarios):
     wb.save(buffer)
     buffer.seek(0)
     return buffer
+
+
+def generar_excel_reservas_elementos(reservas):
+    wb, ws = _setup_excel()
+    ws.title = 'Reservas Elementos'
+    _encabezado_excel(ws, 'Reservas de Elementos')
+
+    headers = ['#', 'Fecha', 'Elemento', 'Categoría', 'Solicitante', 'Descripción', 'Estado']
+    for col, h in enumerate(headers, 1):
+        _header_cell(ws, 3, col, h)
+
+    for i, r in enumerate(reservas, 4):
+        alt = i % 2 == 0
+        data = [
+            r.pk,
+            r.fecha_reserva.strftime('%d/%m/%Y'),
+            r.elemento.nombre_elemento,
+            r.elemento.categoria.descripcion,
+            r.usuario.nombre_completo,
+            r.descripcion_reserva,
+            r.get_estado_display(),
+        ]
+        for col, val in enumerate(data, 1):
+            _data_cell(ws, i, col, val, alt)
+
+    for col, w in enumerate([5, 14, 22, 18, 22, 35, 14], 1):
+        ws.column_dimensions[ws.cell(row=3, column=col).column_letter].width = w
+    ws.freeze_panes = 'A4'
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    return buffer

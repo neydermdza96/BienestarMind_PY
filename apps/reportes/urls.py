@@ -10,4 +10,6 @@ urlpatterns = [
     path('reservas-espacios/excel/', views.reporte_reservas_espacios_excel, name='res_espacios_excel'),
     path('usuarios/pdf/', views.reporte_usuarios_pdf, name='usuarios_pdf'),
     path('usuarios/excel/', views.reporte_usuarios_excel, name='usuarios_excel'),
+    path('reservas-elementos/pdf/', views.reporte_reservas_elementos_pdf, name='res_elementos_pdf'),
+    path('reservas-elementos/excel/', views.reporte_reservas_elementos_excel, name='res_elementos_excel'),
 ]
