@@ -33,6 +33,24 @@ def dashboard(request):
         mis_reservas_espacios = ReservaEspacio.objects.filter(usuario=user)
         mis_reservas_elementos = ReservaElemento.objects.filter(usuario=user)
 
+        asesorias_data = [
+            mis_asesorias.filter(estado='PENDIENTE').count(),
+            mis_asesorias.filter(estado='CONFIRMADA').count(),
+            mis_asesorias.filter(estado='CANCELADA').count(),
+        ]
+
+        elementos_data = [
+            mis_reservas_elementos.filter(estado='PENDIENTE').count(),
+            mis_reservas_elementos.filter(estado='APROBADA').count(),
+            mis_reservas_elementos.filter(estado='CANCELADA').count(),
+        ]
+
+        espacios_data = [
+            mis_reservas_espacios.filter(estado='PENDIENTE').count(),
+            mis_reservas_espacios.filter(estado='CONFIRMADA').count(),
+            mis_reservas_espacios.filter(estado='CANCELADA').count(),
+        ]
+
         return render(request, 'core/dashboard_aprendiz.html', {
             'stats': {
                 'asesorias': mis_asesorias.count(),
@@ -44,6 +62,9 @@ def dashboard(request):
             'ultimas_asesorias': mis_asesorias.select_related(
                 'usuario_asesor'
             ).order_by('-created_at')[:5],
+            'asesorias_data': asesorias_data,
+            'elementos_data': elementos_data,
+            'espacios_data': espacios_data,
         })
 
     # ── Dashboard STAFF: vista global ──────────────────────────────────────
@@ -629,8 +650,87 @@ def metricas_api(request):
 
     hoy = datetime.date.today()
     hace6 = hoy - datetime.timedelta(days=180)
+    user = request.user
 
-    # ── Asesorías por mes (últimos 6 meses) ────────────────────────
+    # ── Aprendiz: solo sus propios datos ───────────────────────────
+    if user.es_aprendiz:
+        asesorias_qs = Asesoria.objects.filter(usuario_recibe=user)
+        reservas_espacios_qs = ReservaEspacio.objects.filter(usuario=user)
+        reservas_elementos_qs = ReservaElemento.objects.filter(usuario=user)
+
+        asesorias_mes = (
+            asesorias_qs
+            .filter(fecha__gte=hace6)
+            .annotate(mes=TruncMonth('fecha'))
+            .values('mes')
+            .annotate(total=Count('id'))
+            .order_by('mes')
+        )
+        labels_asesorias = [a['mes'].strftime('%b %Y') for a in asesorias_mes]
+        data_asesorias   = [a['total'] for a in asesorias_mes]
+
+        reservas_mes = (
+            reservas_espacios_qs
+            .filter(fecha_reserva__gte=hace6)
+            .annotate(mes=TruncMonth('fecha_reserva'))
+            .values('mes')
+            .annotate(total=Count('id'))
+            .order_by('mes')
+        )
+        labels_reservas = [r['mes'].strftime('%b %Y') for r in reservas_mes]
+        data_reservas   = [r['total'] for r in reservas_mes]
+
+        por_estado_asesorias = (
+            asesorias_qs
+            .values('estado')
+            .annotate(total=Count('id'))
+        )
+        estados_labels = [e['estado'] for e in por_estado_asesorias]
+        estados_data   = [e['total'] for e in por_estado_asesorias]
+
+        por_estado_elementos = (
+            reservas_elementos_qs
+            .values('estado')
+            .annotate(total=Count('id'))
+        )
+        elementos_estado_labels = [e['estado'] for e in por_estado_elementos]
+        elementos_estado_data   = [e['total'] for e in por_estado_elementos]
+
+        por_estado_espacios = (
+            reservas_espacios_qs
+            .values('estado')
+            .annotate(total=Count('id'))
+        )
+        espacios_estado_labels = [e['estado'] for e in por_estado_espacios]
+        espacios_estado_data   = [e['total'] for e in por_estado_espacios]
+
+        return JsonResponse({
+            'asesorias_por_mes': {
+                'labels': labels_asesorias,
+                'data':   data_asesorias,
+            },
+            'reservas_por_mes': {
+                'labels': labels_reservas,
+                'data':   data_reservas,
+            },
+            'asesorias_por_estado': {
+                'labels': estados_labels,
+                'data':   estados_data,
+                'colores': ['#f47920', '#3d9b35', '#64748b', '#a32d2d'],
+            },
+            'reservas_elementos_por_estado': {
+                'labels': elementos_estado_labels,
+                'data':   elementos_estado_data,
+                'colores': ['#f47920', '#3d9b35', '#a32d2d', '#94a3b8'],
+            },
+            'reservas_espacios_por_estado': {
+                'labels': espacios_estado_labels,
+                'data':   espacios_estado_data,
+                'colores': ['#854F0B', '#185FA5', '#a32d2d', '#94a3b8'],
+            },
+        })
+
+    # ── Staff: métricas globales ───────────────────────────────────
     asesorias_mes = (
         Asesoria.objects
         .filter(fecha__gte=hace6)
@@ -642,7 +742,6 @@ def metricas_api(request):
     labels_asesorias = [a['mes'].strftime('%b %Y') for a in asesorias_mes]
     data_asesorias   = [a['total'] for a in asesorias_mes]
 
-    # ── Reservas por mes ───────────────────────────────────────────
     reservas_mes = (
         ReservaEspacio.objects
         .filter(fecha_reserva__gte=hace6)
@@ -654,7 +753,6 @@ def metricas_api(request):
     labels_reservas = [r['mes'].strftime('%b %Y') for r in reservas_mes]
     data_reservas   = [r['total'] for r in reservas_mes]
 
-    # ── Asesorías por estado ───────────────────────────────────────
     por_estado = (
         Asesoria.objects
         .values('estado')
@@ -663,7 +761,6 @@ def metricas_api(request):
     estados_labels = [e['estado'] for e in por_estado]
     estados_data   = [e['total'] for e in por_estado]
 
-    # ── Usuarios por rol ───────────────────────────────────────────
     from apps.usuarios.models import Rol, UsuarioRol
     roles_data = []
     for rol in Rol.objects.all():
@@ -672,7 +769,6 @@ def metricas_api(request):
             'total': UsuarioRol.objects.filter(rol=rol).count()
         })
 
-    # ── Asesorías por instructor ───────────────────────────────────
     por_instructor = (
         Asesoria.objects
         .values('usuario_asesor__nombres', 'usuario_asesor__apellidos')
