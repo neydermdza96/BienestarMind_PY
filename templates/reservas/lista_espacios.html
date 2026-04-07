@@ -35,10 +35,12 @@
     <a href="{% url 'reservas:espacios' %}" class="btn-outline-sena">Limpiar</a>
     <div class="ms-auto d-flex gap-2 align-items-center">
       <span style="font-size:12px;color:var(--texto-muted);">{{ total }} reserva{{ total|pluralize }}</span>
-      <a href="?{{ request.GET.urlencode }}&formato=pdf" class="btn-outline-sena" style="font-size:12px;padding:5px 12px;">
+      <a href="{% url 'reservas:espacios' %}?q={{ q }}&estado={{ estado }}&sede={{ sede }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}&formato=pdf"
+         class="btn-outline-sena" style="font-size:12px;padding:5px 12px;">
         <i class="bi bi-file-pdf"></i> PDF
       </a>
-      <a href="?{{ request.GET.urlencode }}&formato=excel" class="btn-outline-sena" style="font-size:12px;padding:5px 12px;">
+      <a href="{% url 'reservas:espacios' %}?q={{ q }}&estado={{ estado }}&sede={{ sede }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}&formato=excel"
+         class="btn-outline-sena" style="font-size:12px;padding:5px 12px;">
         <i class="bi bi-file-excel"></i> Excel
       </a>
     </div>
@@ -69,12 +71,16 @@
           <td>{{ r.pk }}</td>
           <td style="white-space:nowrap;">
             <strong>{{ r.fecha_reserva|date:"d/m/Y" }}</strong>
-            {% if r.hora_inicio %}<br><small style="color:var(--texto-muted);">{{ r.hora_inicio }}</small>{% endif %}
+            {% if r.hora_inicio %}
+              <br><small style="color:var(--texto-muted);">{{ r.hora_inicio }}</small>
+            {% endif %}
           </td>
           <td>
             <span style="font-weight:500;">{{ r.espacio.nombre_del_espacio }}</span>
           </td>
-          <td style="font-size:12px;color:var(--texto-muted);">{{ r.espacio.sede.nombre_sede }}</td>
+          <td style="font-size:12px;color:var(--texto-muted);">
+            {{ r.espacio.sede.nombre_sede }}
+          </td>
           <td>
             <div class="d-flex align-items-center gap-2">
               <div class="avatar avatar-sm">{{ r.usuario.get_initials }}</div>
@@ -93,61 +99,84 @@
           </td>
           <td>
             {% if r.ficha %}
-            <span style="font-size:11px;font-family:monospace;background:#e8f0fe;color:#3c4eb7;padding:2px 8px;border-radius:10px;">{{ r.ficha.id_ficha }}</span>
-            {% else %}—{% endif %}
+              <span style="font-size:11px;font-family:monospace;background:#e8f0fe;color:#3c4eb7;padding:2px 8px;border-radius:10px;">
+                {{ r.ficha.id_ficha }}
+              </span>
+            {% else %}
+              —
+            {% endif %}
           </td>
           <td>
             <span class="badge-estado badge-{{ r.estado|lower }}">{{ r.get_estado_display }}</span>
           </td>
           <td style="text-align:center;">
             {% if r.notificacion_enviada %}
-            <i class="bi bi-check-circle-fill" style="color:var(--sena-verde);font-size:16px;" title="Notificado"></i>
+              <i class="bi bi-check-circle-fill" style="color:var(--sena-verde);font-size:16px;" title="Notificado"></i>
             {% else %}
-            <i class="bi bi-clock" style="color:#94a3b8;font-size:16px;" title="Sin notificar"></i>
+              <i class="bi bi-clock" style="color:#94a3b8;font-size:16px;" title="Sin notificar"></i>
             {% endif %}
           </td>
           <td>
             <div class="acciones d-flex gap-1 flex-wrap">
-              {% if user.es_aprendiz and r.usuario_id == user.id and r.estado == 'PENDIENTE' %}
-              <a href="{% url 'reservas:espacios_editar' r.pk %}"
-                 class="btn-outline-sena"
-                 style="font-size:11px;padding:4px 8px;"
-                 title="Editar">
-                <i class="bi bi-pencil"></i>
-              </a>
-              <a href="{% url 'reservas:espacios_cancelar' r.pk %}"
-                 class="btn-outline-sena"
-                 style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;"
-                 onclick="return confirm('¿Eliminar esta reserva de espacio?')"
-                 title="Eliminar">
-                <i class="bi bi-trash"></i>
-              </a>
-              {% elif r.estado == 'PENDIENTE' and user.es_admin_o_coordinador %}
-              <a href="{% url 'reservas:espacios_aprobar' r.pk %}"
-                 class="btn-sena"
-                 style="font-size:11px;padding:4px 8px;"
-                 onclick="return confirm('¿Aprobar esta reserva?')"
-                 title="Aprobar">
-                <i class="bi bi-check-circle"></i>
-              </a>
-              <a href="{% url 'reservas:espacios_rechazar' r.pk %}"
-                 class="btn-outline-sena"
-                 style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;"
-                 onclick="return confirm('¿Rechazar esta reserva?')"
-                 title="Rechazar">
-                <i class="bi bi-x-circle"></i>
-              </a>
-              {% elif r.estado == 'CONFIRMADA' and user.es_admin_o_coordinador %}
-              <a href="{% url 'reservas:espacios_cancelar' r.pk %}"
-                 class="btn-outline-sena"
-                 style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;"
-                 onclick="return confirm('¿Cancelar esta reserva?')"
-                 title="Cancelar">
-                <i class="bi bi-x-circle"></i>
-              </a>
+
+              {% if user.es_admin_o_coordinador %}
+
+                <a href="{% url 'reservas:espacios_editar' r.pk %}"
+                   class="btn-outline-sena"
+                   style="font-size:11px;padding:4px 8px;"
+                   title="Editar">
+                  <i class="bi bi-pencil"></i>
+                </a>
+
+                {% if r.estado == 'PENDIENTE' %}
+                  <a href="{% url 'reservas:espacios_aprobar' r.pk %}"
+                     class="btn-sena"
+                     style="font-size:11px;padding:4px 8px;"
+                     onclick="return confirm('¿Aprobar esta reserva?')"
+                     title="Aprobar">
+                    <i class="bi bi-check-circle"></i>
+                  </a>
+                  <a href="{% url 'reservas:espacios_rechazar' r.pk %}"
+                     class="btn-outline-sena"
+                     style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;"
+                     onclick="return confirm('¿Rechazar esta reserva?')"
+                     title="Rechazar">
+                    <i class="bi bi-x-circle"></i>
+                  </a>
+                {% endif %}
+
+                <a href="{% url 'reservas:espacios_cancelar' r.pk %}"
+                   class="btn-outline-sena"
+                   style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;"
+                   onclick="return confirm('¿Eliminar o cancelar esta reserva?')"
+                   title="Eliminar">
+                  <i class="bi bi-trash"></i>
+                </a>
+
+              {% elif user.es_aprendiz or user.es_instructor %}
+
+                {% if r.usuario_id == user.id and r.estado == 'PENDIENTE' %}
+                  <a href="{% url 'reservas:espacios_editar' r.pk %}"
+                     class="btn-outline-sena"
+                     style="font-size:11px;padding:4px 8px;"
+                     title="Editar">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <a href="{% url 'reservas:espacios_cancelar' r.pk %}"
+                     class="btn-outline-sena"
+                     style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;"
+                     onclick="return confirm('¿Eliminar esta reserva de espacio?')"
+                     title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                  </a>
+                {% else %}
+                  —
+                {% endif %}
+
               {% else %}
-              —
+                —
               {% endif %}
+
             </div>
           </td>
         </tr>
@@ -156,7 +185,10 @@
           <td colspan="11" style="text-align:center;padding:40px;color:var(--texto-muted);">
             <i class="bi bi-building" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4;"></i>
             Sin reservas de espacios registradas.
-            <br><a href="{% url 'reservas:espacios_crear' %}" class="btn-sena mt-3 d-inline-flex">+ Hacer primera reserva</a>
+            <br>
+            <a href="{% url 'reservas:espacios_crear' %}" class="btn-sena mt-3 d-inline-flex">
+              + Hacer primera reserva
+            </a>
           </td>
         </tr>
         {% endfor %}
