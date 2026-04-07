@@ -10,12 +10,12 @@
   </div>
   {% if user.roles.all|length > 0 %}
   <a href="{% url 'asesorias:crear' %}" class="btn-sena">
-    <i class="bi bi-plus-circle"></i> Registrar Asesoría
+    <i class="bi bi-plus-circle"></i>
+    {% if user.es_aprendiz %}Solicitar Asesoría{% else %}Registrar Asesoría{% endif %}
   </a>
   {% endif %}
 </div>
 
-<!-- Filtros -->
 <div class="bm-card mb-3">
   <form method="get" class="filter-bar">
     <input type="text" name="q" value="{{ q }}" class="search-input"
@@ -30,7 +30,6 @@
     <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="filter-select" title="Hasta">
     <button type="submit" class="btn-sena"><i class="bi bi-search"></i> Filtrar</button>
     <a href="{% url 'asesorias:lista' %}" class="btn-outline-sena">Limpiar</a>
-    <!-- Reportes -->
     <div class="ms-auto d-flex gap-2 align-items-center">
       <span style="font-size:12px;color:var(--texto-muted);">{{ total }} registro{{ total|pluralize }}</span>
       <a href="?{{ request.GET.urlencode }}&formato=pdf" class="btn-outline-sena" style="font-size:12px;padding:5px 12px;">
@@ -43,7 +42,6 @@
   </form>
 </div>
 
-<!-- Tabla -->
 <div class="bm-card">
   <div class="table-responsive">
     <table class="bm-table">
@@ -107,15 +105,25 @@
             {% endif %}
           </td>
           <td>
-            <div class="acciones">
+            <div class="acciones d-flex gap-1 flex-wrap">
+              {% if user.es_aprendiz and a.usuario_recibe_id == user.id and a.estado == 'PENDIENTE' %}
               <a href="{% url 'asesorias:editar' a.pk %}" class="btn-outline-sena" style="font-size:11px;padding:4px 8px;" title="Editar">
                 <i class="bi bi-pencil"></i>
               </a>
-              {% if user.roles.filter.exists %}
               <a href="{% url 'asesorias:eliminar' a.pk %}" class="btn-outline-sena" style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;"
                  onclick="return confirm('¿Eliminar esta asesoría?')" title="Eliminar">
                 <i class="bi bi-trash"></i>
               </a>
+              {% elif user.es_admin %}
+              <a href="{% url 'asesorias:editar' a.pk %}" class="btn-outline-sena" style="font-size:11px;padding:4px 8px;" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'asesorias:eliminar' a.pk %}" class="btn-outline-sena" style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;"
+                 onclick="return confirm('¿Eliminar esta asesoría?')" title="Eliminar">
+                <i class="bi bi-trash"></i>
+              </a>
+              {% else %}
+              —
               {% endif %}
             </div>
           </td>

@@ -15,7 +15,12 @@ from django.views.decorators.cache import never_cache
 from apps.elementos.models import ReservaEspacio, ReservaElemento, Elemento
 from apps.core.models import Espacio, Ficha
 from apps.core.notificaciones import notificar_reserva_espacio_completo, notificar_reserva_elemento_completo
-from apps.reportes.generadores import generar_pdf_reservas_espacios, generar_excel_reservas_espacios
+from apps.reportes.generadores import (
+    generar_pdf_reservas_espacios,
+    generar_excel_reservas_espacios,
+    generar_pdf_reservas_elementos,
+    generar_excel_reservas_elementos,
+)
 
 
 # ── FORMS ──────────────────────────────────────────────────────────────────
@@ -105,7 +110,12 @@ class ReservaElementoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['elemento'].queryset = Elemento.objects.filter(estado_elemento='DISPONIBLE')
+
+        elemento_actual_id = self.instance.elemento_id if self.instance and self.instance.pk else None
+        self.fields['elemento'].queryset = Elemento.objects.filter(
+            Q(estado_elemento='DISPONIBLE') | Q(pk=elemento_actual_id)
+        ).distinct()
+
         self.fields['ficha'].queryset = Ficha.objects.all()
         self.fields['ficha'].required = False
         # Bloquear fechas pasadas en el selector del navegador (capa cliente)
@@ -122,6 +132,12 @@ class ReservaElementoForm(forms.ModelForm):
                 f'Fecha ingresada: {fecha.strftime("%d/%m/%Y")}.'
             )
         return fecha
+
+
+# ── HELPERS ────────────────────────────────────────────────────────────────
+
+def _puede_gestionar_reserva_pendiente(usuario, reserva_usuario, estado):
+    return usuario.es_aprendiz and reserva_usuario == usuario and estado == 'PENDIENTE'
 
 
 # ── RESERVAS ESPACIOS ──────────────────────────────────────────────────────
@@ -143,10 +159,14 @@ def lista_espacios(request):
             Q(motivo_reserva__icontains=q) | Q(espacio__nombre_del_espacio__icontains=q) |
             Q(usuario__nombres__icontains=q) | Q(usuario__apellidos__icontains=q)
         )
-    if estado: qs = qs.filter(estado=estado)
-    if sede: qs = qs.filter(espacio__sede__id=sede)
-    if f_d: qs = qs.filter(fecha_reserva__gte=f_d)
-    if f_h: qs = qs.filter(fecha_reserva__lte=f_h)
+    if estado:
+        qs = qs.filter(estado=estado)
+    if sede:
+        qs = qs.filter(espacio__sede__id=sede)
+    if f_d:
+        qs = qs.filter(fecha_reserva__gte=f_d)
+    if f_h:
+        qs = qs.filter(fecha_reserva__lte=f_h)
     if request.GET.get('formato') == 'pdf':
         buf = generar_pdf_reservas_espacios(qs)
         resp = HttpResponse(buf.read(), content_type='application/pdf')
@@ -165,6 +185,7 @@ def lista_espacios(request):
         'fecha_desde': f_d, 'fecha_hasta': f_h, 'total': qs.count(),
     })
 
+
 @never_cache
 @login_required
 def crear_reserva_espacio(request):
@@ -182,13 +203,47 @@ def crear_reserva_espacio(request):
         return redirect('reservas:espacios')
     return render(request, 'reservas/form_espacio.html', {'form': form, 'titulo': 'Reservar Espacio'})
 
+
+@never_cache
+@login_required
+def editar_reserva_espacio(request, pk):
+    reserva = get_object_or_404(ReservaEspacio, pk=pk)
+
+    if not _puede_gestionar_reserva_pendiente(request.user, reserva.usuario, reserva.estado):
+        messages.error(request, 'Solo puedes editar tus reservas de espacios en estado Pendiente.')
+        return redirect('reservas:espacios')
+
+    form = ReservaEspacioForm(request.POST or None, instance=reserva)
+    if request.method == 'POST' and form.is_valid():
+        reserva_editada = form.save(commit=False)
+        reserva_editada.usuario = request.user
+        reserva_editada.estado = 'PENDIENTE'
+        reserva_editada.save()
+        messages.success(request, 'Reserva de espacio actualizada correctamente.')
+        return redirect('reservas:espacios')
+
+    return render(request, 'reservas/form_espacio.html', {
+        'form': form,
+        'titulo': f'Editar Reserva de Espacio #{reserva.pk}',
+        'reserva': reserva,
+    })
+
+
 @never_cache
 @login_required
 def eliminar_reserva_espacio(request, pk):
     reserva = get_object_or_404(ReservaEspacio, pk=pk)
+
+    if _puede_gestionar_reserva_pendiente(request.user, reserva.usuario, reserva.estado):
+        reserva.delete()
+        messages.success(request, 'Reserva eliminada correctamente.')
+        return redirect('reservas:espacios')
+
     puede = request.user.tiene_rol('ADMINISTRADOR', 'COORDINADOR') or reserva.usuario == request.user
     if not puede:
-        messages.error(request, 'No puedes cancelar esta reserva.'); return redirect('reservas:espacios')
+        messages.error(request, 'No puedes cancelar esta reserva.')
+        return redirect('reservas:espacios')
+
     reserva.estado = 'CANCELADA'
     reserva.save()
     messages.success(request, 'Reserva cancelada.')
@@ -211,11 +266,26 @@ def lista_elementos(request):
             Q(descripcion_reserva__icontains=q) | Q(elemento__nombre_elemento__icontains=q) |
             Q(usuario__nombres__icontains=q)
         )
-    if estado: qs = qs.filter(estado=estado)
+    if estado:
+        qs = qs.filter(estado=estado)
+
+    if request.GET.get('formato') == 'pdf':
+        buf = generar_pdf_reservas_elementos(qs)
+        resp = HttpResponse(buf.read(), content_type='application/pdf')
+        resp['Content-Disposition'] = 'attachment; filename="reservas_elementos.pdf"'
+        return resp
+
+    if request.GET.get('formato') == 'excel':
+        buf = generar_excel_reservas_elementos(qs)
+        resp = HttpResponse(buf.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        resp['Content-Disposition'] = 'attachment; filename="reservas_elementos.xlsx"'
+        return resp
+
     return render(request, 'reservas/lista_elementos.html', {
         'reservas': qs, 'estados': ReservaElemento.ESTADO_CHOICES,
         'q': q, 'estado': estado, 'total': qs.count(),
     })
+
 
 @never_cache
 @login_required
@@ -236,6 +306,55 @@ def crear_reserva_elemento(request):
         return redirect('reservas:elementos')
     return render(request, 'reservas/form_elemento.html', {'form': form, 'titulo': 'Solicitar Elemento'})
 
+
+@never_cache
+@login_required
+def editar_reserva_elemento(request, pk):
+    reserva = get_object_or_404(ReservaElemento, pk=pk)
+
+    if not _puede_gestionar_reserva_pendiente(request.user, reserva.usuario, reserva.estado):
+        messages.error(request, 'Solo puedes editar tus reservas de elementos en estado Pendiente.')
+        return redirect('reservas:elementos')
+
+    form = ReservaElementoForm(request.POST or None, instance=reserva)
+    if request.method == 'POST' and form.is_valid():
+        reserva_editada = form.save(commit=False)
+        reserva_editada.usuario = request.user
+        reserva_editada.estado = 'PENDIENTE'
+        reserva_editada.save()
+        messages.success(request, 'Reserva de elemento actualizada correctamente.')
+        return redirect('reservas:elementos')
+
+    return render(request, 'reservas/form_elemento.html', {
+        'form': form,
+        'titulo': f'Editar Reserva de Elemento #{reserva.pk}',
+        'reserva': reserva,
+    })
+
+
+@never_cache
+@login_required
+def eliminar_reserva_elemento(request, pk):
+    reserva = get_object_or_404(ReservaElemento, pk=pk)
+
+    if not _puede_gestionar_reserva_pendiente(request.user, reserva.usuario, reserva.estado):
+        messages.error(request, 'Solo puedes eliminar tus reservas de elementos en estado Pendiente.')
+        return redirect('reservas:elementos')
+
+    elemento = reserva.elemento
+    reserva.delete()
+
+    if elemento.estado_elemento == 'EN_USO' and not ReservaElemento.objects.filter(
+        elemento=elemento,
+        estado__in=['PENDIENTE', 'APROBADA']
+    ).exists():
+        elemento.estado_elemento = 'DISPONIBLE'
+        elemento.save(update_fields=['estado_elemento'])
+
+    messages.success(request, 'Reserva de elemento eliminada correctamente.')
+    return redirect('reservas:elementos')
+
+
 @never_cache
 @login_required
 def aprobar_reserva_espacio(request, pk):
@@ -247,6 +366,7 @@ def aprobar_reserva_espacio(request, pk):
     reserva.save()
     messages.success(request, f'Reserva #{pk} aprobada correctamente.')
     return redirect('reservas:espacios')
+
 
 @never_cache
 @login_required
@@ -260,6 +380,7 @@ def rechazar_reserva_espacio(request, pk):
     messages.success(request, f'Reserva #{pk} rechazada.')
     return redirect('reservas:espacios')
 
+
 @never_cache
 @login_required
 def aprobar_reserva_elemento(request, pk):
@@ -271,6 +392,7 @@ def aprobar_reserva_elemento(request, pk):
     reserva.save()
     messages.success(request, f'Reserva #{pk} aprobada correctamente.')
     return redirect('reservas:elementos')
+
 
 @never_cache
 @login_required
