@@ -49,7 +49,10 @@ class AsesoriaForm(forms.ModelForm):
         self.fields['usuario_asesor'].queryset = Usuario.objects.filter(
             roles__descripcion__in=instructores_roles
         ).distinct()
-        self.fields['usuario_recibe'].queryset = Usuario.objects.filter(is_active=True)
+        self.fields['usuario_recibe'].queryset = Usuario.objects.filter(
+    roles__descripcion='APRENDIZ',
+    is_active=True
+).distinct()
         self.fields['ficha'].queryset = Ficha.objects.all()
         self.fields['ficha'].required = False
         self.fields['hora'].required = False

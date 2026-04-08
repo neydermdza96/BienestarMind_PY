@@ -112,7 +112,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = 'Usuarios'
 
     def __str__(self):
-        return f'{self.nombres} {self.apellidos} ({self.documento})'
+        return f'{self.nombres} {self.apellidos}'
 
     @property
     def nombre_completo(self):
