@@ -42,12 +42,14 @@ def dashboard(request):
         elementos_data = [
             mis_reservas_elementos.filter(estado='PENDIENTE').count(),
             mis_reservas_elementos.filter(estado='APROBADA').count(),
+            mis_reservas_elementos.filter(estado='NO_DISPONIBLE').count(),
             mis_reservas_elementos.filter(estado='CANCELADA').count(),
         ]
 
         espacios_data = [
             mis_reservas_espacios.filter(estado='PENDIENTE').count(),
-            mis_reservas_espacios.filter(estado='CONFIRMADA').count(),
+            mis_reservas_espacios.filter(estado='APROBADA').count(),
+            mis_reservas_espacios.filter(estado='NO_DISPONIBLE').count(),
             mis_reservas_espacios.filter(estado='CANCELADA').count(),
         ]
 
@@ -82,7 +84,6 @@ def dashboard(request):
         ).order_by('-created_at')[:5],
         'sedes': Sede.objects.prefetch_related('espacios').all(),
     })
-
 
 # ─── FICHAS ────────────────────────────────────────────────────────────────
 class FichaForm(forms.ModelForm):

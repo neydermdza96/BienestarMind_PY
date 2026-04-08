@@ -61,7 +61,6 @@ class ReservaEspacioForm(forms.ModelForm):
         self.fields['hora_inicio'].input_formats = ['%H:%M']
         self.fields['fecha_reserva'].widget.attrs['min'] = datetime.date.today().isoformat()
 
-        # Solo admin/coordinador pueden ver/cambiar el estado
         if not (user and user.tiene_rol('ADMINISTRADOR', 'COORDINADOR')):
             self.fields.pop('estado', None)
         else:
@@ -89,7 +88,7 @@ class ReservaEspacioForm(forms.ModelForm):
             conflictos = ReservaEspacio.objects.filter(
                 espacio=espacio,
                 fecha_reserva=fecha,
-                estado__in=['PENDIENTE', 'CONFIRMADA'],
+                estado__in=['PENDIENTE', 'APROBADA'],
             ).exclude(pk=self.instance.pk if self.instance.pk else None)
 
             if hora_inicio and duracion:
@@ -150,7 +149,6 @@ class ReservaElementoForm(forms.ModelForm):
         self.fields['fecha_reserva'].input_formats = ['%Y-%m-%d']
         self.fields['fecha_reserva'].widget.attrs['min'] = datetime.date.today().isoformat()
 
-        # Solo admin/coordinador pueden ver/cambiar el estado
         if not (user and user.tiene_rol('ADMINISTRADOR', 'COORDINADOR')):
             self.fields.pop('estado', None)
         else:
@@ -429,12 +427,10 @@ def editar_reserva_elemento(request, pk):
 
         reserva_editada.save()
 
-        # Si quedó aprobada, marca en uso
         if reserva_editada.estado == 'APROBADA' and reserva_editada.elemento:
             reserva_editada.elemento.estado_elemento = 'EN_USO'
             reserva_editada.elemento.save(update_fields=['estado_elemento'])
 
-        # Si quedó cancelada o pendiente, libera si no tiene otras reservas activas
         elif reserva_editada.elemento and not ReservaElemento.objects.filter(
             elemento=reserva_editada.elemento,
             estado__in=['PENDIENTE', 'APROBADA']
@@ -483,7 +479,7 @@ def aprobar_reserva_espacio(request, pk):
         return redirect('reservas:espacios')
 
     reserva = get_object_or_404(ReservaEspacio, pk=pk)
-    reserva.estado = 'CONFIRMADA'
+    reserva.estado = 'APROBADA'
     reserva.save()
     messages.success(request, f'Reserva #{pk} aprobada correctamente.')
     return redirect('reservas:espacios')
@@ -493,13 +489,13 @@ def aprobar_reserva_espacio(request, pk):
 @login_required
 def rechazar_reserva_espacio(request, pk):
     if not request.user.tiene_rol('ADMINISTRADOR', 'COORDINADOR'):
-        messages.error(request, 'No tienes permisos para rechazar reservas.')
+        messages.error(request, 'No tienes permisos para marcar reservas como no disponibles.')
         return redirect('reservas:espacios')
 
     reserva = get_object_or_404(ReservaEspacio, pk=pk)
-    reserva.estado = 'CANCELADA'
+    reserva.estado = 'NO_DISPONIBLE'
     reserva.save()
-    messages.success(request, f'Reserva #{pk} rechazada.')
+    messages.success(request, f'Reserva #{pk} marcada como no disponible.')
     return redirect('reservas:espacios')
 
 
@@ -526,11 +522,11 @@ def aprobar_reserva_elemento(request, pk):
 @login_required
 def rechazar_reserva_elemento(request, pk):
     if not request.user.tiene_rol('ADMINISTRADOR', 'COORDINADOR'):
-        messages.error(request, 'No tienes permisos para rechazar reservas.')
+        messages.error(request, 'No tienes permisos para marcar reservas como no disponibles.')
         return redirect('reservas:elementos')
 
     reserva = get_object_or_404(ReservaElemento, pk=pk)
-    reserva.estado = 'CANCELADA'
+    reserva.estado = 'NO_DISPONIBLE'
     reserva.save()
 
     elemento = reserva.elemento
@@ -541,5 +537,5 @@ def rechazar_reserva_elemento(request, pk):
         elemento.estado_elemento = 'DISPONIBLE'
         elemento.save(update_fields=['estado_elemento'])
 
-    messages.success(request, f'Reserva #{pk} rechazada.')
+    messages.success(request, f'Reserva #{pk} marcada como no disponible.')
     return redirect('reservas:elementos')

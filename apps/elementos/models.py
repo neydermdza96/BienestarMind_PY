@@ -34,12 +34,10 @@ class Elemento(models.Model):
     descripcion     = models.TextField(blank=True)
     estado_elemento = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='DISPONIBLE')
     codigo          = models.CharField(max_length=50, blank=True, unique=True, null=True)
-    # ── Inventario / Stock ─────────────────────────────────────────
     stock_total     = models.PositiveIntegerField(default=1, help_text='Cantidad total de este elemento')
     stock_disponible= models.PositiveIntegerField(default=1, help_text='Cantidad disponible para préstamo')
     stock_minimo    = models.PositiveIntegerField(default=1, help_text='Alerta cuando el stock baja de este valor')
     ubicacion       = models.CharField(max_length=100, blank=True, help_text='Ej: Sala Bienestar, Armario 2')
-    # ──────────────────────────────────────────────────────────────
     created_at      = models.DateTimeField(auto_now_add=True)
     update_at       = models.DateTimeField(auto_now=True)
 
@@ -97,8 +95,13 @@ class MovimientoInventario(models.Model):
     descripcion = models.TextField(blank=True)
     stock_antes = models.PositiveIntegerField()
     stock_despues = models.PositiveIntegerField()
-    usuario     = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-                                    null=True, blank=True, related_name='movimientos_inventario')
+    usuario     = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='movimientos_inventario'
+    )
     created_at  = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -113,25 +116,27 @@ class MovimientoInventario(models.Model):
 
 class ReservaElemento(models.Model):
     ESTADO_CHOICES = [
-        ('PENDIENTE',  'Pendiente'),
-        ('APROBADA',   'Aprobada'),
-        ('RECHAZADA',  'Rechazada'),
-        ('DEVUELTO',   'Devuelto'),
-        ('VENCIDO',    'Vencido'),
+        ('PENDIENTE',      'Pendiente'),
+        ('APROBADA',       'Aprobada'),
+        ('NO_DISPONIBLE',  'No disponible'),
+        ('CANCELADA',      'Cancelada'),
     ]
 
-    fecha_reserva       = models.DateField()
-    fecha_devolucion    = models.DateField(null=True, blank=True, help_text='Fecha prevista de devolución')
-    descripcion_reserva = models.TextField()
-    estado              = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
-    ficha               = models.ForeignKey('core.Ficha', on_delete=models.SET_NULL, null=True, blank=True)
-    usuario             = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-                                            related_name='reservas_elementos')
-    elemento            = models.ForeignKey(Elemento, on_delete=models.CASCADE, related_name='reservas')
-    cantidad            = models.PositiveIntegerField(default=1)
-    notificacion_enviada= models.BooleanField(default=False)
-    created_at          = models.DateTimeField(auto_now_add=True)
-    update_at           = models.DateTimeField(auto_now=True)
+    fecha_reserva        = models.DateField()
+    fecha_devolucion     = models.DateField(null=True, blank=True, help_text='Fecha prevista de devolución')
+    descripcion_reserva  = models.TextField()
+    estado               = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
+    ficha                = models.ForeignKey('core.Ficha', on_delete=models.SET_NULL, null=True, blank=True)
+    usuario              = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='reservas_elementos'
+    )
+    elemento             = models.ForeignKey(Elemento, on_delete=models.CASCADE, related_name='reservas')
+    cantidad             = models.PositiveIntegerField(default=1)
+    notificacion_enviada = models.BooleanField(default=False)
+    created_at           = models.DateTimeField(auto_now_add=True)
+    update_at            = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'reservaelementos'
@@ -145,24 +150,27 @@ class ReservaElemento(models.Model):
 
 class ReservaEspacio(models.Model):
     ESTADO_CHOICES = [
-        ('PENDIENTE',  'Pendiente'),
-        ('CONFIRMADA', 'Confirmada'),
-        ('RECHAZADA',  'Rechazada'),
-        ('CANCELADA',  'Cancelada'),
+        ('PENDIENTE',      'Pendiente'),
+        ('APROBADA',       'Aprobada'),
+        ('NO_DISPONIBLE',  'No disponible'),
+        ('CANCELADA',      'Cancelada'),
     ]
 
-    fecha_reserva   = models.DateField()
-    hora_inicio     = models.TimeField(null=True, blank=True)
-    motivo_reserva  = models.TextField()
-    estado          = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
-    duracion        = models.PositiveIntegerField(help_text='Duración en minutos', default=60)
-    ficha           = models.ForeignKey('core.Ficha', on_delete=models.SET_NULL, null=True, blank=True)
-    usuario         = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-                                        related_name='reservas_espacios')
-    espacio         = models.ForeignKey('core.Espacio', on_delete=models.CASCADE, related_name='reservas')
+    fecha_reserva        = models.DateField()
+    hora_inicio          = models.TimeField(null=True, blank=True)
+    motivo_reserva       = models.TextField()
+    estado               = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
+    duracion             = models.PositiveIntegerField(help_text='Duración en minutos', default=60)
+    ficha                = models.ForeignKey('core.Ficha', on_delete=models.SET_NULL, null=True, blank=True)
+    usuario              = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='reservas_espacios'
+    )
+    espacio              = models.ForeignKey('core.Espacio', on_delete=models.CASCADE, related_name='reservas')
     notificacion_enviada = models.BooleanField(default=False)
-    created_at      = models.DateTimeField(auto_now_add=True)
-    update_at       = models.DateTimeField(auto_now=True)
+    created_at           = models.DateTimeField(auto_now_add=True)
+    update_at            = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'reservaespacios'
@@ -175,5 +183,7 @@ class ReservaEspacio(models.Model):
 
     def hay_conflicto(self):
         return ReservaEspacio.objects.filter(
-            espacio=self.espacio, fecha_reserva=self.fecha_reserva, estado='CONFIRMADA',
+            espacio=self.espacio,
+            fecha_reserva=self.fecha_reserva,
+            estado='APROBADA',
         ).exclude(pk=self.pk).exists()

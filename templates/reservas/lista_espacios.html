@@ -6,41 +6,53 @@
 <div class="section-header">
   <div>
     <h2 class="section-title">Reservas de Espacios</h2>
-    <p class="section-sub">Gestión de reservas de salas y consultorios</p>
+    <p class="section-sub">Gestión de reservas de salas y espacios del sistema</p>
   </div>
   <a href="{% url 'reservas:espacios_crear' %}" class="btn-sena">
-    <i class="bi bi-building-add"></i> Nueva Reserva
+    <i class="bi bi-building-add"></i> Reservar Espacio
   </a>
 </div>
 
 <div class="bm-card mb-3">
   <form method="get" class="filter-bar">
     <input type="text" name="q" value="{{ q }}" class="search-input"
-           placeholder="🔍 Buscar por motivo, espacio, solicitante...">
+           placeholder="🔍 Buscar por espacio, solicitante, motivo...">
+
     <select name="estado" class="filter-select">
       <option value="">Todos los estados</option>
       {% for val, label in estados %}
       <option value="{{ val }}" {% if val == estado %}selected{% endif %}>{{ label }}</option>
       {% endfor %}
     </select>
+
     <select name="sede" class="filter-select">
       <option value="">Todas las sedes</option>
       {% for s in sedes %}
-      <option value="{{ s.id }}" {% if s.id|stringformat:"s" == sede %}selected{% endif %}>{{ s.nombre_sede }}</option>
+      <option value="{{ s.id }}" {% if sede == s.id|stringformat:'s' %}selected{% endif %}>{{ s.nombre_sede }}</option>
       {% endfor %}
     </select>
-    <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="filter-select" title="Desde">
-    <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="filter-select" title="Hasta">
-    <button type="submit" class="btn-sena"><i class="bi bi-search"></i> Filtrar</button>
+
+    <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="filter-select" style="min-width:160px;">
+    <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="filter-select" style="min-width:160px;">
+
+    <button type="submit" class="btn-sena">
+      <i class="bi bi-search"></i> Filtrar
+    </button>
+
     <a href="{% url 'reservas:espacios' %}" class="btn-outline-sena">Limpiar</a>
+
     <div class="ms-auto d-flex gap-2 align-items-center">
       <span style="font-size:12px;color:var(--texto-muted);">{{ total }} reserva{{ total|pluralize }}</span>
+
       <a href="{% url 'reservas:espacios' %}?q={{ q }}&estado={{ estado }}&sede={{ sede }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}&formato=pdf"
-         class="btn-outline-sena" style="font-size:12px;padding:5px 12px;">
+         class="btn-outline-sena"
+         style="font-size:12px;padding:5px 12px;">
         <i class="bi bi-file-pdf"></i> PDF
       </a>
+
       <a href="{% url 'reservas:espacios' %}?q={{ q }}&estado={{ estado }}&sede={{ sede }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}&formato=excel"
-         class="btn-outline-sena" style="font-size:12px;padding:5px 12px;">
+         class="btn-outline-sena"
+         style="font-size:12px;padding:5px 12px;">
         <i class="bi bi-file-excel"></i> Excel
       </a>
     </div>
@@ -54,14 +66,15 @@
         <tr>
           <th>#</th>
           <th>Fecha</th>
+          <th>Hora</th>
+          <th>Duración</th>
           <th>Espacio</th>
           <th>Sede</th>
           <th>Solicitante</th>
-          <th>Duración</th>
           <th>Motivo</th>
           <th>Ficha</th>
           <th>Estado</th>
-          <th>Notif.</th>
+          <th>Notificación</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -69,34 +82,18 @@
         {% for r in reservas %}
         <tr>
           <td>{{ r.pk }}</td>
-          <td style="white-space:nowrap;">
-            <strong>{{ r.fecha_reserva|date:"d/m/Y" }}</strong>
-            {% if r.hora_inicio %}
-              <br><small style="color:var(--texto-muted);">{{ r.hora_inicio }}</small>
-            {% endif %}
-          </td>
-          <td>
-            <span style="font-weight:500;">{{ r.espacio.nombre_del_espacio }}</span>
-          </td>
-          <td style="font-size:12px;color:var(--texto-muted);">
-            {{ r.espacio.sede.nombre_sede }}
-          </td>
+          <td style="white-space:nowrap;"><strong>{{ r.fecha_reserva|date:"d/m/Y" }}</strong></td>
+          <td>{{ r.hora_inicio|time:"H:i"|default:"—" }}</td>
+          <td>{{ r.duracion }} min</td>
+          <td><strong>{{ r.espacio.nombre_del_espacio }}</strong></td>
+          <td style="font-size:12px;color:var(--texto-muted);">{{ r.espacio.sede.nombre_sede }}</td>
           <td>
             <div class="d-flex align-items-center gap-2">
               <div class="avatar avatar-sm">{{ r.usuario.get_initials }}</div>
               <span style="font-size:13px;">{{ r.usuario.nombre_completo }}</span>
             </div>
           </td>
-          <td style="text-align:center;">
-            <span style="font-size:12px;background:var(--sena-verde-light);color:var(--sena-verde-dark);padding:2px 8px;border-radius:10px;">
-              {{ r.duracion }} min
-            </span>
-          </td>
-          <td style="max-width:180px;">
-            <span title="{{ r.motivo_reserva }}" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;">
-              {{ r.motivo_reserva|truncatechars:45 }}
-            </span>
-          </td>
+          <td style="max-width:210px;font-size:12px;">{{ r.motivo_reserva|truncatechars:60 }}</td>
           <td>
             {% if r.ficha %}
               <span style="font-size:11px;font-family:monospace;background:#e8f0fe;color:#3c4eb7;padding:2px 8px;border-radius:10px;">
@@ -128,27 +125,10 @@
                   <i class="bi bi-pencil"></i>
                 </a>
 
-                {% if r.estado == 'PENDIENTE' %}
-                  <a href="{% url 'reservas:espacios_aprobar' r.pk %}"
-                     class="btn-sena"
-                     style="font-size:11px;padding:4px 8px;"
-                     onclick="return confirm('¿Aprobar esta reserva?')"
-                     title="Aprobar">
-                    <i class="bi bi-check-circle"></i>
-                  </a>
-                  <a href="{% url 'reservas:espacios_rechazar' r.pk %}"
-                     class="btn-outline-sena"
-                     style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;"
-                     onclick="return confirm('¿Rechazar esta reserva?')"
-                     title="Rechazar">
-                    <i class="bi bi-x-circle"></i>
-                  </a>
-                {% endif %}
-
                 <a href="{% url 'reservas:espacios_cancelar' r.pk %}"
                    class="btn-outline-sena"
                    style="font-size:11px;padding:4px 8px;color:#a32d2d;border-color:#a32d2d;"
-                   onclick="return confirm('¿Eliminar o cancelar esta reserva?')"
+                   onclick="return confirm('¿Eliminar esta reserva?')"
                    title="Eliminar">
                   <i class="bi bi-trash"></i>
                 </a>
@@ -182,7 +162,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="11" style="text-align:center;padding:40px;color:var(--texto-muted);">
+          <td colspan="12" style="text-align:center;padding:40px;color:var(--texto-muted);">
             <i class="bi bi-building" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4;"></i>
             Sin reservas de espacios registradas.
             <br>
