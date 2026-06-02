@@ -78,6 +78,7 @@ WSGI_APPLICATION = 'bienestarmind.wsgi.application'
 if os.environ.get('DATABASE_URL'):
     DATABASES = {
         'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL', f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
             conn_max_age=600,
             conn_health_checks=True,
             ssl_require=True # Render exige SSL para PostgreSQL en producción
