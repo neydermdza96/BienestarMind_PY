@@ -39,3 +39,9 @@ weasyprint==68.1
 webencodings==0.5.1
 yarl==1.23.0
 zopfli==0.4.1
+
+# --- PRODUCCION Y DESPLIEGUE  (RENDER) 
+
+gunicorn==23.0.0 # 1 .el servidor HTTP WSGI que Render exige para correr Python en producción.
+dj-database-url==2.1.0 # 2 .permite mapear la base de datos de Render en una sola línea de código.
+whitenoise==6.6.0  # 3 .para que Render pueda servir los archivos estáticos (CSS, JS, imágenes del proyecto) de forma eficiente y nativa sin requerir un servidor externo

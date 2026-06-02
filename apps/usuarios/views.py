@@ -387,6 +387,7 @@ def lista_usuarios(request):
     q      = request.GET.get('q', '')
     rol_id = request.GET.get('rol', '')
     genero = request.GET.get('genero', '')
+    
     if q:
         qs = qs.filter(
             Q(nombres__icontains=q) | Q(apellidos__icontains=q) |
@@ -395,16 +396,32 @@ def lista_usuarios(request):
         )
     if rol_id: qs = qs.filter(roles__id=rol_id)
     if genero: qs = qs.filter(genero=genero)
+    
+    # ── CONTROL DE EXCEPCIONES EN REPORTES (LISTA 6, ÍTEM 10) ────────────────
     if request.GET.get('formato') == 'pdf':
-        buf  = generar_pdf_usuarios(qs)
-        resp = HttpResponse(buf.read(), content_type='application/pdf')
-        resp['Content-Disposition'] = 'attachment; filename="usuarios_bienestarmind.pdf"'
-        return resp
+        try:
+            buf  = generar_pdf_usuarios(qs)
+            resp = HttpResponse(buf.read(), content_type='application/pdf')
+            resp['Content-Disposition'] = 'attachment; filename="usuarios_bienestarmind.pdf"'
+            return resp
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Error generando PDF de usuarios: {e}")
+            messages.error(request, "No se pudo generar el reporte en PDF en este momento. Intente de nuevo.")
+            return redirect('usuarios:lista')
+
     if request.GET.get('formato') == 'excel':
-        buf  = generar_excel_usuarios(qs)
-        resp = HttpResponse(buf.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        resp['Content-Disposition'] = 'attachment; filename="usuarios_bienestarmind.xlsx"'
-        return resp
+        try:
+            buf  = generar_excel_usuarios(qs)
+            resp = HttpResponse(buf.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            resp['Content-Disposition'] = 'attachment; filename="usuarios_bienestarmind.xlsx"'
+            return resp
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Error generando Excel de usuarios: {e}")
+            messages.error(request, "Ocurrió un error inesperado al exportar a Excel.")
+            return redirect('usuarios:lista')
+
     return render(request, 'usuarios/lista.html', {
         'usuarios': qs,
         'roles': Rol.objects.all(),

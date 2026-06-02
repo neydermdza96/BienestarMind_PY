@@ -5,6 +5,7 @@ Proyecto SENA · Tecnólogo ADSO
 import os
 from pathlib import Path
 import environ
+import dj_database_url # 5 . importamos al inicio o antes de usarlo
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -14,6 +15,12 @@ environ.Env.read_env(BASE_DIR / '.env')
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-bienestarmind-sena-2026-change-in-prod')
 DEBUG = env('DEBUG', default=True)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
+# Render
+# Render
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME') # ✅ Corregido a HOSTNAME
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -36,6 +43,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # 4 .Nuevo -- servidor de estatico en produccion
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -64,8 +72,19 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'bienestarmind.wsgi.application'
-
-DATABASES = {
+# ── BASE DE DATOS HÍBRIDA ──────────────────────────────────────────────────
+# Si existe la variable 'DATABASE_URL' (provista por Render), se configura sola.
+# Si no, recurre al diccionario por defecto en local.
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True # Render exige SSL para PostgreSQL en producción
+        )
+    }
+else:
+   DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': env('DB_NAME', default='db_bienestarmind'),
@@ -105,8 +124,14 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# ── OPTIMIZACIÓN DE ESTÁTICOS EN PRODUCCIÓN ────────────────────────────────
+# Comprime los archivos (gzip/brotli) y reduce el peso de carga en la nube
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

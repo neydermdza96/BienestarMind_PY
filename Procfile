@@ -1,0 +1,1 @@
+web: gunicorn bienestarmind.wsgi:application
