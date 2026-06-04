@@ -174,7 +174,10 @@ class UsuarioForm(forms.ModelForm):
 
 def _enviar_email_recuperacion(usuario, token, request):
     """Construye y envía el email con el enlace de recuperación."""
+    import threading
+    import logging
     from django.urls import reverse
+
     enlace = request.build_absolute_uri(
         reverse('usuarios:nueva_password', kwargs={'token': str(token.token)})
     )
@@ -183,22 +186,24 @@ def _enviar_email_recuperacion(usuario, token, request):
         'enlace': enlace,
         'horas_validez': TokenRecuperacion.HORAS_VALIDEZ,
     }
-    try:
-        html_msg   = render_to_string('emails/recuperar_password.html', contexto)
-        plain_msg  = strip_tags(html_msg)
-        send_mail(
-            subject='Recuperación de contraseña — BienestarMind SENA',
-            message=plain_msg,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[usuario.correo],
-            html_message=html_msg,
-            fail_silently=False,
-        )
-        return True
-    except Exception as e:
-        import logging
-        logging.getLogger(__name__).error(f'Error enviando email recuperación: {e}')
-        return False
+
+    def _enviar():
+        try:
+            html_msg  = render_to_string('emails/recuperar_password.html', contexto)
+            plain_msg = strip_tags(html_msg)
+            send_mail(
+                subject='Recuperación de contraseña — BienestarMind SENA',
+                message=plain_msg,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[usuario.correo],
+                html_message=html_msg,
+                fail_silently=True,
+            )
+        except Exception as e:
+            logging.getLogger(__name__).error(f'Error enviando email recuperación: {e}')
+
+    threading.Thread(target=_enviar, daemon=True).start()
+    return True
 
 
 def _enviar_email_bienvenida(usuario, request):
