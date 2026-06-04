@@ -203,20 +203,23 @@ def _enviar_email_recuperacion(usuario, token, request):
 
 def _enviar_email_bienvenida(usuario, request):
     """Email de bienvenida al registrarse."""
-    contexto = {'usuario': usuario}
-    try:
-        html_msg  = render_to_string('emails/bienvenida.html', contexto)
-        plain_msg = strip_tags(html_msg)
-        send_mail(
-            subject='Bienvenido a BienestarMind — SENA',
-            message=plain_msg,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[usuario.correo],
-            html_message=html_msg,
-            fail_silently=True,
-        )
-    except Exception:
-        pass
+    import threading
+    def _enviar():
+        contexto = {'usuario': usuario}
+        try:
+            html_msg  = render_to_string('emails/bienvenida.html', contexto)
+            plain_msg = strip_tags(html_msg)
+            send_mail(
+                subject='Bienvenido a BienestarMind — SENA',
+                message=plain_msg,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[usuario.correo],
+                html_message=html_msg,
+                fail_silently=True,
+            )
+        except Exception:
+            pass
+    threading.Thread(target=_enviar, daemon=True).start()
 
 
 # ════════════════════════════════════════════════════════════════════
