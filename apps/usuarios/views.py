@@ -178,6 +178,8 @@ def _enviar_email_recuperacion(usuario, token, request):
     import logging
     from django.urls import reverse
 
+    logger = logging.getLogger(__name__)
+
     enlace = request.build_absolute_uri(
         reverse('usuarios:nueva_password', kwargs={'token': str(token.token)})
     )
@@ -189,6 +191,7 @@ def _enviar_email_recuperacion(usuario, token, request):
 
     def _enviar():
         try:
+            logger.warning(f'Intentando enviar email a {usuario.correo}')
             html_msg  = render_to_string('emails/recuperar_password.html', contexto)
             plain_msg = strip_tags(html_msg)
             send_mail(
@@ -197,10 +200,11 @@ def _enviar_email_recuperacion(usuario, token, request):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[usuario.correo],
                 html_message=html_msg,
-                fail_silently=True,
+                fail_silently=False,
             )
+            logger.warning(f'Email enviado exitosamente a {usuario.correo}')
         except Exception as e:
-            logging.getLogger(__name__).error(f'Error enviando email recuperación: {e}')
+            logger.error(f'ERROR enviando email recuperación: {type(e).__name__}: {e}')
 
     threading.Thread(target=_enviar, daemon=True).start()
     return True
