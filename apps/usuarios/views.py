@@ -173,9 +173,9 @@ class UsuarioForm(forms.ModelForm):
 # ════════════════════════════════════════════════════════════════════
 
 def _enviar_email_recuperacion(usuario, token, request):
-    """Construye y envía el email con el enlace de recuperación."""
     import threading
     import logging
+    import time
     from django.urls import reverse
 
     logger = logging.getLogger(__name__)
@@ -190,6 +190,7 @@ def _enviar_email_recuperacion(usuario, token, request):
     }
 
     def _enviar():
+        time.sleep(1)  # pequeño delay para que el worker esté listo
         try:
             logger.warning(f'Intentando enviar email a {usuario.correo}')
             html_msg  = render_to_string('emails/recuperar_password.html', contexto)
@@ -202,11 +203,12 @@ def _enviar_email_recuperacion(usuario, token, request):
                 html_message=html_msg,
                 fail_silently=False,
             )
-            logger.warning(f'Email enviado exitosamente a {usuario.correo}')
+            logger.warning(f'✅ Email enviado a {usuario.correo}')
         except Exception as e:
-            logger.error(f'ERROR enviando email recuperación: {type(e).__name__}: {e}')
+            logger.error(f'❌ ERROR email: {type(e).__name__}: {e}')
 
-    threading.Thread(target=_enviar, daemon=True).start()
+    t = threading.Thread(target=_enviar, daemon=False)  # daemon=False importante
+    t.start()
     return True
 
 
