@@ -41,12 +41,12 @@ def enviar_email(destinatario_email, asunto, template, contexto):
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[destinatario_email],
             html_message=html_message,
-            fail_silently=False,
+            fail_silently=True,
         )
         logger.info(f'Email enviado a {destinatario_email}: {asunto}')
         return True
     except Exception as e:
-        logger.error(f'Error enviando email a {destinatario_email}: {e}')
+        print(f"Error al enviar correo en segundo plano: {str(e)}")
         return False
 
 
