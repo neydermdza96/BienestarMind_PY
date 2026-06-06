@@ -150,7 +150,7 @@ EMAIL_HOST = 'smtp.sendgrid.net'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'apikey'
-EMAIL_HOST_PASSWORD = env('SENDGRIND_API_KEY', default='')
+EMAIL_HOST_PASSWORD = env('SENDGRID_API_KEY', default='')
 DEFAULT_FROM_EMAIL = 'BienestarMind SENA <ney322283@gmail.com>'
 
 # ── Twilio ─────────────────────────────────────────────────────────────────
