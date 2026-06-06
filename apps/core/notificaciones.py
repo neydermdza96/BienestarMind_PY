@@ -31,23 +31,27 @@ def _twilio_client():
 # ── EMAIL ──────────────────────────────────────────────────────────────────
 
 def enviar_email(destinatario_email, asunto, template, contexto):
-    """Envía email HTML desde una plantilla."""
-    try:
-        html_message = render_to_string(f'emails/{template}.html', contexto)
-        plain_message = strip_tags(html_message)
-        send_mail(
-            subject=asunto,
-            message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[destinatario_email],
-            html_message=html_message,
-            fail_silently=False,
-        )
-        logger.info(f'Email enviado a {destinatario_email}: {asunto}')
-        return True
-    except Exception as e:
-        logger.error(f'Error enviando email a {destinatario_email}: {e}')
-        return False
+    """Envía email HTML desde una plantilla en hilo separado."""
+    import threading
+
+    def _enviar():
+        try:
+            html_message = render_to_string(f'emails/{template}.html', contexto)
+            plain_message = strip_tags(html_message)
+            send_mail(
+                subject=asunto,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[destinatario_email],
+                html_message=html_message,
+                fail_silently=True,
+            )
+            logger.info(f'Email enviado a {destinatario_email}: {asunto}')
+        except Exception as e:
+            logger.error(f'Error al enviar correo a {destinatario_email}: {str(e)}')
+
+    threading.Thread(target=_enviar, daemon=False).start()
+    return True
 
 
 def email_confirmacion_asesoria(asesoria):
