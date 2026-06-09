@@ -45,7 +45,7 @@ class AsesoriaForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
-        instructores_roles = ['ADMINISTRADOR', 'INSTRUCTOR', 'COORDINADOR']
+        instructores_roles = ['INSTRUCTOR',]
         self.fields['usuario_asesor'].queryset = Usuario.objects.filter(
             roles__descripcion__in=instructores_roles
         ).distinct()
