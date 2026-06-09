@@ -18,4 +18,5 @@ urlpatterns = [
     path('crear/',          views.crear_usuario,   name='crear'),
     path('<int:pk>/editar/', views.editar_usuario,  name='editar'),
     path('<int:pk>/toggle/', views.toggle_usuario,  name='toggle'),
+    path('perfil/editar/', views.editar_perfil, name='editar_perfil'),
 ]

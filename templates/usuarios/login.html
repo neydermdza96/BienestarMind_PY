@@ -109,6 +109,16 @@
       <h2>Iniciar Sesión</h2>
       <p>Ingresa con tu número de documento y contraseña</p>
 
+      {% if messages %}
+      {% for msg in messages %}
+        <div class="errorlist" style="margin-bottom:8px;">
+          <li style="list-style:none;">
+          <i class="bi bi-exclamation-circle"></i> {{ msg }}
+          </li>
+        </div>
+      {% endfor %}
+      {% endif %}
+
       {% if form.errors %}
         <ul class="errorlist">
           {% for field in form %}{% for error in field.errors %}<li><i class="bi bi-exclamation-circle"></i> {{ error }}</li>{% endfor %}{% endfor %}

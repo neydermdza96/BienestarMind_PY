@@ -6,7 +6,7 @@ Vistas de Usuarios — BienestarMind
 - CRUD de usuarios (admin)
 """
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
@@ -63,7 +63,7 @@ class RegistroForm(forms.ModelForm):
             'correo':              forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'correo@ejemplo.com'}),
             'genero':              forms.Select(attrs={'class': 'form-select'}),
             'telefono':            forms.TextInput(attrs={'class': 'form-control', 'placeholder': '3XXXXXXXXX'}),
-            'fecha_de_nacimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'fecha_de_nacimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
         }
 
     def clean_nombres(self):
@@ -144,7 +144,7 @@ class UsuarioForm(forms.ModelForm):
             'correo':              forms.EmailInput(attrs={'class': 'form-control'}),
             'genero':              forms.Select(attrs={'class': 'form-select'}),
             'telefono':            forms.TextInput(attrs={'class': 'form-control', 'placeholder': '3XXXXXXXXX'}),
-            'fecha_de_nacimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'fecha_de_nacimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
             'foto':                forms.FileInput(attrs={'class': 'form-control'}),
         }
 
@@ -167,6 +167,40 @@ class UsuarioForm(forms.ModelForm):
     def clean_apellidos(self):
         return self.cleaned_data.get('apellidos', '').upper()
 
+# Formulario de editar perfil
+
+class PerfilForm(forms.ModelForm):
+    password = forms.CharField(
+        label='Nueva contraseña', required=False,
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Dejar vacío para no cambiar'}),
+        help_text='Solo completa si deseas cambiar tu contraseña.'
+    )
+    confirmar_password = forms.CharField(
+        label='Confirmar contraseña', required=False,
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Repite la nueva contraseña'}),
+    )
+    class Meta:
+        model = Usuario
+        fields = ['nombres', 'apellidos', 'correo', 'telefono', 'fecha_de_nacimiento', 'genero']
+        widgets = {
+            'nombres':             forms.TextInput(attrs={'class': 'form-control'}),
+            'apellidos':           forms.TextInput(attrs={'class': 'form-control'}),
+            'correo':              forms.EmailInput(attrs={'class': 'form-control'}),
+            'telefono':            forms.TextInput(attrs={'class': 'form-control'}),
+            'fecha_de_nacimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'genero':              forms.Select(attrs={'class': 'form-select'}),
+        }
+    def clean(self):
+        cleaned = super().clean()
+        pwd = cleaned.get('password')
+        confirm = cleaned.get('confirmar_password')
+        if pwd and pwd != confirm:
+            raise forms.ValidationError('Las contraseñas no coinciden.')
+        return cleaned
+    def clean_nombres(self):
+        return self.cleaned_data.get('nombres', '').upper()
+    def clean_apellidos(self):
+        return self.cleaned_data.get('apellidos', '').upper()
 
 # ════════════════════════════════════════════════════════════════════
 # HELPERS PRIVADOS
@@ -509,3 +543,18 @@ def toggle_usuario(request, pk):
     estado = 'activado' if usuario.is_active else 'desactivado'
     messages.success(request, f'Usuario {usuario.nombre_completo} {estado}.')
     return redirect('usuarios:lista')
+
+@never_cache
+@login_required
+def editar_perfil(request):
+    form = PerfilForm(request.POST or None, instance=request.user)
+    if request.method == 'POST' and form.is_valid():
+        user = form.save(commit=False)
+        pwd = form.cleaned_data.get('password')
+        if pwd:
+            user.set_password(pwd)
+            update_session_auth_hash(request, user)
+        user.save()
+        messages.success(request, 'Tu perfil fue actualizado correctamente.')
+        return redirect('usuarios:editar_perfil')
+    return render(request, 'usuarios/editar_perfil.html', {'form': form})
