@@ -51,6 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'bienestarmind.settings.PostmanAutenticacionMiddleware',
 ]
 
 ROOT_URLCONF = 'bienestarmind.urls'
@@ -86,7 +87,7 @@ if os.environ.get('DATABASE_URL'):
         )
     }
 else:
-   DATABASES = {
+    DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': env('DB_NAME', default='db_bienestarmind'),
@@ -195,3 +196,28 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
+
+# ── MIDDLEWARE DE PRUEBAS PARA POSTMAN (TEMPORAL) ──────────────────────────
+from django.contrib.auth import get_user_model
+
+class PostmanAutenticacionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Si la petición trae este Header secreto, saltamos el login y el CSRF
+        if request.headers.get('X-Postman-Secret') == 'BienestarMindQA2026':
+            User = get_user_model()
+            # Busca tu usuario administrador (asegúrate de que exista este correo o cámbialo por el tuyo)
+            try:
+                # Si tu modelo usa 'username', cambia 'email' por 'username'
+                usuario = User.objects.filter(is_superuser=True).first()
+                if usuario:
+                    request.user = usuario
+                    # Desactivamos la verificación CSRF para esta petición
+                    setattr(request, '_dont_enforce_csrf_checks', True)
+            except Exception:
+                pass
+
+        response = self.get_response(request)
+        return response
