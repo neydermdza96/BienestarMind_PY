@@ -197,7 +197,7 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# ── MIDDLEWARE DE PRUEBAS PARA POSTMAN (TEMPORAL) ──────────────────────────
+# MIDDLEWARE DE PRUEBAS PARA POSTMAN (TEMPORAL) 
 from django.contrib.auth import get_user_model
 
 class PostmanAutenticacionMiddleware:
